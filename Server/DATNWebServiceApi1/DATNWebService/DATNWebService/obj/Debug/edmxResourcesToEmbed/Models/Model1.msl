@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+  <EntityContainerMapping StorageEntityContainer="DATNModelStoreContainer" CdmEntityContainer="DATNEntities">
+    <EntitySetMapping Name="accounts">
+      <EntityTypeMapping TypeName="DATNModel.account">
+        <MappingFragment StoreEntitySet="account">
+          <ScalarProperty Name="id" ColumnName="id" />
+          <ScalarProperty Name="password" ColumnName="password" />
+          <ScalarProperty Name="phone" ColumnName="phone" />
+          <ScalarProperty Name="firs_name" ColumnName="firs_name" />
+          <ScalarProperty Name="last_name" ColumnName="last_name" />
+          <ScalarProperty Name="date_create" ColumnName="date_create" />
+          <ScalarProperty Name="avatar" ColumnName="avatar" />
+          <ScalarProperty Name="rating" ColumnName="rating" />
+          <ScalarProperty Name="trip_count" ColumnName="trip_count" />
+          <ScalarProperty Name="trip_accept" ColumnName="trip_accept" />
+          <ScalarProperty Name="trip_cancel" ColumnName="trip_cancel" />
+          <ScalarProperty Name="status" ColumnName="status" />
+          <ScalarProperty Name="account_type" ColumnName="account_type" />
+          <ScalarProperty Name="gene" ColumnName="gene" />
+          <ScalarProperty Name="address" ColumnName="address" />
+          <ScalarProperty Name="driving_licence_id" ColumnName="driving_licence_id" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="services">
+      <EntityTypeMapping TypeName="DATNModel.service">
+        <MappingFragment StoreEntitySet="service">
+          <ScalarProperty Name="id" ColumnName="id" />
+          <ScalarProperty Name="name" ColumnName="name" />
+          <ScalarProperty Name="describle" ColumnName="describle" />
+          <ScalarProperty Name="cost" ColumnName="cost" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="trips">
+      <EntityTypeMapping TypeName="DATNModel.trip">
+        <MappingFragment StoreEntitySet="trip">
+          <ScalarProperty Name="id" ColumnName="id" />
+          <ScalarProperty Name="driver_id" ColumnName="driver_id" />
+          <ScalarProperty Name="customer_id" ColumnName="customer_id" />
+          <ScalarProperty Name="pickup_time" ColumnName="pickup_time" />
+          <ScalarProperty Name="dropoff_time" ColumnName="dropoff_time" />
+          <ScalarProperty Name="vehicle_id" ColumnName="vehicle_id" />
+          <ScalarProperty Name="rider_rating" ColumnName="rider_rating" />
+          <ScalarProperty Name="driver_rating" ColumnName="driver_rating" />
+          <ScalarProperty Name="money_sum" ColumnName="money_sum" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="triprequests">
+      <EntityTypeMapping TypeName="DATNModel.triprequest">
+        <MappingFragment StoreEntitySet="triprequest">
+          <ScalarProperty Name="id" ColumnName="id" />
+          <ScalarProperty Name="driver_id" ColumnName="driver_id" />
+          <ScalarProperty Name="car_type_id" ColumnName="car_type_id" />
+          <ScalarProperty Name="goods_type_id" ColumnName="goods_type_id" />
+          <ScalarProperty Name="trip_id" ColumnName="trip_id" />
+          <ScalarProperty Name="good_width" ColumnName="good_width" />
+          <ScalarProperty Name="good_height" ColumnName="good_height" />
+          <ScalarProperty Name="good_weight" ColumnName="good_weight" />
+          <ScalarProperty Name="start_point" ColumnName="start_point" />
+          <ScalarProperty Name="destination" ColumnName="destination" />
+          <ScalarProperty Name="service_id" ColumnName="service_id" />
+          <ScalarProperty Name="trip_cost" ColumnName="trip_cost" />
+          <ScalarProperty Name="payment_type_id" ColumnName="payment_type_id" />
+          <ScalarProperty Name="note" ColumnName="note" />
+          <ScalarProperty Name="status" ColumnName="status" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="vehicles">
+      <EntityTypeMapping TypeName="DATNModel.vehicle">
+        <MappingFragment StoreEntitySet="vehicle">
+          <ScalarProperty Name="id" ColumnName="id" />
+          <ScalarProperty Name="firm_id" ColumnName="firm_id" />
+          <ScalarProperty Name="model" ColumnName="model" />
+          <ScalarProperty Name="color" ColumnName="color" />
+          <ScalarProperty Name="company" ColumnName="company" />
+          <ScalarProperty Name="lience_plate" ColumnName="lience_plate" />
+          <ScalarProperty Name="certificate_id" ColumnName="certificate_id" />
+          <ScalarProperty Name="weight" ColumnName="weight" />
+          <ScalarProperty Name="type" ColumnName="type" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="wallets">
+      <EntityTypeMapping TypeName="DATNModel.wallet">
+        <MappingFragment StoreEntitySet="wallet">
+          <ScalarProperty Name="id" ColumnName="id" />
+          <ScalarProperty Name="surplus" ColumnName="surplus" />
+          <ScalarProperty Name="debit" ColumnName="debit" />
+          <ScalarProperty Name="account_id" ColumnName="account_id" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+  </EntityContainerMapping>
+</Mapping>
