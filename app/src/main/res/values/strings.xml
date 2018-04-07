@@ -1,3 +1,6 @@
 <resources>
-    <string name="app_name">My Application</string>
+    <string name="app_name">Here</string>
+    <string name="welcome">Kết nối với Here</string>
+    <string name="connect_soicity">Hoặc kết nối với mạng xã hội</string>
+    <string name="input_phone_number">Nhập số điện thoại di động</string>
 </resources>

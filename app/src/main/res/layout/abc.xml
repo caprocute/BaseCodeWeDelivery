@@ -8,22 +8,26 @@
     <!--first launch show-->
     <FrameLayout
         android:id="@+id/frame"
+        android:visibility="gone"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="visible">
+        android:layout_height="match_parent">
 
         <ScrollView
             android:id="@+id/scrollLogin"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:fillViewport="true"></ScrollView>
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:fillViewport="true"
+            android:fitsSystemWindows="true"
+            android:visibility="visible">
+
+        </ScrollView>
 
         <LinearLayout
             android:id="@+id/layout"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
             android:orientation="vertical"
-            android:visibility="gone"
+            android:visibility="visible"
             android:weightSum="1">
 
             <FrameLayout
@@ -54,44 +58,28 @@
                     android:textColor="@color/blacktxt"
                     android:textSize="26dp" />
 
-                <FrameLayout
+                <TableRow
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:layout_marginLeft="20dp"
+                    android:layout_marginRight="20dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                    <FrameLayout
-                        android:id="@+id/phoneclick"
+                    <com.rilixtech.CountryCodePicker
+                        android:id="@+id/ccp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"></com.rilixtech.CountryCodePicker>
 
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"></FrameLayout>
-
-                    <TableRow
+                    <android.support.v7.widget.AppCompatEditText
+                        android:id="@+id/phone_number_edt"
+                        android:focusable="false"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="30dp"
-                        android:layout_marginLeft="30dp"
-                        android:layout_marginRight="30dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <com.rilixtech.CountryCodePicker
-                            android:id="@+id/ccp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:focusable="false"
-                            app:ccp_clickable="false"
-                            app:ccp_hideNameCode="true"
-                            app:ccp_hidePhoneCode="true"
-                            app:ccp_defaultNameCode="VN"></com.rilixtech.CountryCodePicker>
-
-                        <android.support.v7.widget.AppCompatEditText
-                            android:id="@+id/phone_number_edt"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:focusable="false"
-                            android:inputType="phone"
-                            app:ccp_defaultCode="84" />
-                    </TableRow>
-                </FrameLayout>
+                        android:hint="@string/input_phone_number"
+                        android:inputType="phone" />
+                </TableRow>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -99,11 +87,10 @@
                     android:background="@color/split_line" />
 
                 <TextView
-                    android:id="@+id/connect"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingLeft="30dp"
-                    android:paddingTop="30dp"
+                    android:paddingLeft="20dp"
+                    android:paddingTop="20dp"
                     android:text="@string/connect_soicity"
                     android:textColor="@color/colorPrimary" />
 
@@ -116,7 +103,7 @@
         android:id="@+id/layoutstart"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="visible">
+        android:visibility="gone">
 
         <ImageView
             android:layout_width="100dp"
