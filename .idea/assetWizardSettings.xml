@@ -18,6 +18,17 @@
                                 <PersistentState>
                                   <option name="children">
                                     <map>
+                                      <entry key="foregroundImage">
+                                        <value>
+                                          <PersistentState>
+                                            <option name="values">
+                                              <map>
+                                                <entry key="scalingPercent" value="86" />
+                                              </map>
+                                            </option>
+                                          </PersistentState>
+                                        </value>
+                                      </entry>
                                       <entry key="foregroundText">
                                         <value>
                                           <PersistentState>
@@ -47,7 +58,9 @@
                                   <option name="values">
                                     <map>
                                       <entry key="backgroundAssetType" value="COLOR" />
-                                      <entry key="foregroundAssetType" value="TEXT" />
+                                      <entry key="foregroundImage" value="C:\Users\hoang\Desktop\2x\Asset 3xhdpi.png" />
+                                      <entry key="legacyIconShape" value="CIRCLE" />
+                                      <entry key="webIconShape" value="CIRCLE" />
                                     </map>
                                   </option>
                                 </PersistentState>
