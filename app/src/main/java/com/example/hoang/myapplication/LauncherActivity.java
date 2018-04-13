@@ -8,12 +8,15 @@ import android.support.v7.widget.AppCompatEditText;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.hoang.myapplication.Aunthencation.MapsActivity;
+import com.example.hoang.myapplication.Aunthencation.SignUpActivity;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.rilixtech.CountryCodePicker;
 
 public class LauncherActivity extends AppCompatActivity {
@@ -26,6 +29,7 @@ public class LauncherActivity extends AppCompatActivity {
     private FrameLayout mStart, mFrame, phoneClick;
     private LinearLayout mlayout;
     private TextView connect;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +49,7 @@ public class LauncherActivity extends AppCompatActivity {
         mCounDownRun = new DemNguocRunnable();
         getscreensize();
         showDemNguoc();
-
+        mAuth = FirebaseAuth.getInstance();
 /*
         mCcp.setOnClickListener(onClickListener);
 */
@@ -114,8 +118,16 @@ public class LauncherActivity extends AppCompatActivity {
     private void handleDemnguoc() {
         mTime--;
         if (mTime == 0) {
-            mlayout.setVisibility(View.VISIBLE);
-            mStart.setVisibility(View.GONE);
+            FirebaseUser currentUser = mAuth.getCurrentUser();
+            if (currentUser != null) {
+                Intent intent = new Intent(LauncherActivity.this, MapsActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                finish();
+                startActivity(intent);
+            } else {
+                mlayout.setVisibility(View.VISIBLE);
+                mStart.setVisibility(View.GONE);
+            }
         }
         mCounDownHandler.postDelayed(mCounDownRun, 1000);
     }

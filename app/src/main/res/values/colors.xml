@@ -7,9 +7,10 @@
     <color name="blacktxt">#000000</color>
     <color name="split_line">#E0E0E0</color>
     <color name="warning">#D50000</color>
-
+    <color name="whitetxt">#ffffff</color>
 
     <color name="grey_100">#F5F5F5</color>
     <color name="grey_300">#E0E0E0</color>
     <color name="grey_500">#9E9E9E</color>
+    <color name="grey_1000">#212121</color>
 </resources>

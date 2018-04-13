@@ -6,7 +6,18 @@
     <string name="valid_phone_number">Số điện thoại này không hợp lệ</string>
     <string name="verify_problem">Tôi đang gặp sự cố</string>
     <string name="verify_code">Nhập mã đã được gửi đến số điện thoại <b>%1$s</b>. Hãy chắc rằng số điện thoại trên là của bạn.</string>
-
+    <string name="cancel">Hủy bỏ</string>
+    <string name="web_signup">Đăng ký trên website</string>
+    <string name="not_support_function">Chức năng này chưa được hỗ trợ</string>
+    <string name="wrong_verify_code">Mã xác nhận không đúng!</string>
+    <string name="choose_account">Chọn tài khoản</string>
+    <string name="facebook">Facebook</string>
+    <string name="verify_information">Xác nhận thông tin của bạn</string>
+    <string name="first_name">Tên</string>
+    <string name="second_name">Họ</string>
+    <string name="email">Email</string>
+    <string name="phone">Số điện thoại di động</string>
+    <string name="google">Google</string>
     <string name="label_google_sign_in">Firebase + Google Sign In</string>
     <string name="desc_google_sign_in">Use a Google Sign In credential to authenticate with Firebase.</string>
 
@@ -53,7 +64,7 @@
     <string name="auth_failed">Authentication failed</string>
     <string name="start_phone_auth">Start</string>
     <string name="verify_phone_auth">Verify</string>
-    <string name="resend_phone_auth">Resend</string>
+    <string name="resend_phone_auth">Gửi lại mã</string>
     <string name="hint_phone_number">Phone Number</string>
     <string name="hint_verification_code">Verification Code</string>
     <string name="status_code_sent">Code Sent</string>
@@ -90,4 +101,5 @@
 
     <string name="id_fmt">User ID: %s</string>
     <string name="email_fmt">Email: %s</string>
+    <string name="title_activity_maps">Map</string>
 </resources>
