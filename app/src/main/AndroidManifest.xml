@@ -41,12 +41,13 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity
-            android:name=".Aunthencation.MapsActivity"
-            android:label="@string/title_activity_maps" />
         <activity android:name=".Aunthencation.GoogleAuthActivity" />
         <activity android:name=".Aunthencation.VerifyInformation" />
-        <activity android:name=".Aunthencation.AnonymousAuthActivity"></activity>
+        <activity android:name=".Aunthencation.AnonymousAuthActivity" />
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+          ></activity>
     </application>
 
 </manifest>

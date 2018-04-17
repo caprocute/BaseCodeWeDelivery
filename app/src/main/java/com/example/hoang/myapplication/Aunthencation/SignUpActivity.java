@@ -113,6 +113,7 @@ public class SignUpActivity extends AppCompatActivity {
             try {
                 // Google Sign In was successful, authenticate with Firebase
                 GoogleSignInAccount account = task.getResult(ApiException.class);
+/*                firebaseAuthWithGoogle(account);*/
                 Intent intent=new Intent(SignUpActivity.this,VerifyInformation.class);
                 intent.putExtra("account",account);
                 startActivity(intent);
@@ -121,7 +122,7 @@ public class SignUpActivity extends AppCompatActivity {
             }
         }
     }
-    private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
+    private void firebaseAuthWithGoogle(final GoogleSignInAccount acct) {
         Log.d(TAGGG, "firebaseAuthWithGoogle:" + acct.getId());
         // [START_EXCLUDE silent]
         // [END_EXCLUDE]
@@ -133,9 +134,9 @@ public class SignUpActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             // Sign in success, update UI with the signed-in user's information
-                            Log.d(TAGGG, "signInWithCredential:success");
-                            Intent intent = new Intent(SignUpActivity.this, GoogleAuthActivity.class);
-                            startActivity(intent);
+                           /* Intent intent=new Intent(SignUpActivity.this,VerifyInformation.class);
+                            intent.putExtra("account",acct);
+                            startActivity(intent);*/
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAGGG, "signInWithCredential:failure", task.getException());
@@ -147,9 +148,7 @@ public class SignUpActivity extends AppCompatActivity {
         if (mCcp.isValid()) {
             txtWarning.setVisibility(View.GONE);
             Intent intent = new Intent(SignUpActivity.this, PhoneAuthActivity.class);
-            Bundle bundle = new Bundle();
-            bundle.putString("phonenumber", mCcp.getFullNumberWithPlus());
-            intent.putExtra("package", bundle);
+            intent.putExtra("phonenumber",  mCcp.getFullNumberWithPlus());
             startActivity(intent);
         } else {
             mEdtPhoneNumber.setText("");

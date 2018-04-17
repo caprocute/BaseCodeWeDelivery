@@ -13,7 +13,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.hoang.myapplication.Aunthencation.MapsActivity;
 import com.example.hoang.myapplication.Aunthencation.SignUpActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -120,7 +119,7 @@ public class LauncherActivity extends AppCompatActivity {
         if (mTime == 0) {
             FirebaseUser currentUser = mAuth.getCurrentUser();
             if (currentUser != null) {
-                Intent intent = new Intent(LauncherActivity.this, MapsActivity.class);
+                Intent intent = new Intent(LauncherActivity.this, MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 finish();
                 startActivity(intent);
