@@ -23,7 +23,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:visibility="gone"
+            android:visibility="visible"
             android:weightSum="1">
 
             <FrameLayout
@@ -33,11 +33,6 @@
                 android:layout_weight="0.62"
                 android:background="@drawable/bak">
 
-                <ImageView
-                    android:layout_width="150dp"
-                    android:layout_height="150dp"
-                    android:layout_gravity="center"
-                    android:src="@mipmap/ic_launcher" />
             </FrameLayout>
 
             <LinearLayout
@@ -60,7 +55,6 @@
 
                     <FrameLayout
                         android:id="@+id/phoneclick"
-
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"></FrameLayout>
 
@@ -103,7 +97,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:paddingLeft="30dp"
-                    android:paddingTop="30dp"
+                    android:paddingTop="10dp"
                     android:text="@string/connect_soicity"
                     android:textColor="@color/colorPrimary" />
 
@@ -116,7 +110,7 @@
         android:id="@+id/layoutstart"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="visible">
+        android:visibility="gone">
 
         <ImageView
             android:layout_width="100dp"

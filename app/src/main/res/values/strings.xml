@@ -1,4 +1,5 @@
 <resources>
+    <!-- main source-->
     <string name="app_name">Here</string>
     <string name="welcome">Kết nối với Here</string>
     <string name="connect_soicity">Hoặc kết nối với mạng xã hội</string>
@@ -22,10 +23,31 @@
     <string name="google">Google</string>
     <string name="label_google_sign_in">Firebase + Google Sign In</string>
     <string name="desc_google_sign_in">Use a Google Sign In credential to authenticate with Firebase.</string>
-
+    <string name="policy_accept">Bằng cách tiếp tục, tôi xác nhận rằng tôi đã đọc và đồng ý với\u0020</string>
+    <string name="term_title">Điều khoản \u0026 điều kiện</string>
+    <string name="policy_title">Chính sách quyền riêng tư.</string>
+    <string name="and">\u0020và\u0020</string>
     <string name="label_facebook_login">Firebase + Facebook Login</string>
     <string name="desc_facebook_login">Use a Facebook Login credential to authenticate with Firebase.</string>
+    <string name="wellcom_back">Xin chào</string>
+    <string name="user_login">Tài khoản khách hàng</string>
+    <string name="driver_login">Tài khoản tài xế</string>
+    <!--item menu -->
+    <string name="menu_wallet">Ví tài khoản</string>
+    <string name="menu_history">Lịch sử đặt xe</string>
+    <string name="menu_help">Hỗ trợ</string>
+    <string name="menu_share">Giới thiệu bạn bè</string>
+    <string name="menu_noti">Thông báo</string>
+    <string name="menu_setting">Cài đặt</string>
+    <string name="menu_driver">Lái xe cùng Here</string>
+    <string name="menu_policy">Pháp lý</string>
+    <string name="menu_contact">Tài xế ưa thích</string>
+    <string name="default_info_title">Địa điểm mặc định</string>
+    <string name="default_info_snippet">No places found, because location permission is disabled.</string>
+    <string name="option_get_place">Get place</string>
+    <string name="pick_place">Choose a place</string>
 
+    <!--firebase aunthencation-->
     <string name="label_twitter_login">Firebase + Twitter Login</string>
     <string name="desc_twitter_login">Use a Twitter Login credential to authenticate with Firebase.</string>
 

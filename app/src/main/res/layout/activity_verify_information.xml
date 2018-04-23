@@ -12,6 +12,20 @@
         android:layout_margin="10dp">
 
         <TextView
+            android:id="@+id/txtPolicy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:textSize="@dimen/textsmall"
+            android:textColor="@color/blacktxt"
+            android:layout_marginTop="40dp"
+            android:text="@string/policy_accept"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/txtError" />
+
+        <TextView
             android:id="@+id/txtError"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -170,8 +184,8 @@
         <ImageButton
             android:id="@+id/button_prvious"
             style="@style/Widget.AppCompat.Button.Colored"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="@dimen/button_navigation_size"
+            android:layout_height="@dimen/button_navigation_size"
             android:layout_marginBottom="8dp"
             android:layout_marginEnd="8dp"
             android:background="@drawable/circle_previous_button"

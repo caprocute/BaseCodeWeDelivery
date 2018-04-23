@@ -3,9 +3,11 @@ package com.example.hoang.myapplication.Aunthencation;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -23,9 +25,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.hoang.myapplication.MainActivity;
+import com.example.hoang.myapplication.Model.Account;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.UserTypeActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.FirebaseTooManyRequestsException;
@@ -34,11 +40,23 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.GoogleAuthCredential;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.util.concurrent.TimeUnit;
 
 public class PhoneAuthActivity extends AppCompatActivity implements
@@ -54,7 +72,7 @@ public class PhoneAuthActivity extends AppCompatActivity implements
     private static final int STATE_VERIFY_SUCCESS = 4;
     private static final int STATE_SIGNIN_FAILED = 5;
     private static final int STATE_SIGNIN_SUCCESS = 6;
-
+    private final String CHILD_ACCOUNT = "ACCOUNT";
     // [START declare_auth]
     private FirebaseAuth mAuth;
     // [END declare_auth]
@@ -69,12 +87,12 @@ public class PhoneAuthActivity extends AppCompatActivity implements
     private TextView mStatusText;
     private TextView mDetailText;
     private TextView mTitle, mHelp;
-
+    private StorageReference mStorageRef;
 
     private EditText mVerificationField;
 
 
-    private ImageButton mVerifyButton;
+    private ImageButton mVerifyButton, mBackButton;
 
 
     private String phone;
@@ -82,9 +100,12 @@ public class PhoneAuthActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
         setContentView(R.layout.activity_phone_auth);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(Color.parseColor("#00000000")));
+
         // Restore instance state
         if (savedInstanceState != null) {
             onRestoreInstanceState(savedInstanceState);
@@ -96,10 +117,13 @@ public class PhoneAuthActivity extends AppCompatActivity implements
         mDetailText = (TextView) findViewById(R.id.detail);
         mVerificationField = (EditText) findViewById(R.id.field_verification_code);
         mVerifyButton = (ImageButton) findViewById(R.id.button_verify_phone);
+        mBackButton = (ImageButton) findViewById(R.id.button_prvious);
         mTitle = (TextView) findViewById(R.id.txttitle);
         mHelp = (TextView) findViewById(R.id.txtHelp);
         mHelp.setOnClickListener(this);
+        mBackButton.setOnClickListener(this);
 
+        mVerifyButton.setOnClickListener(this);
         mAuth = FirebaseAuth.getInstance();
         mCallbacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             @Override
@@ -108,16 +132,6 @@ public class PhoneAuthActivity extends AppCompatActivity implements
                 mVerificationInProgress = false;
                 updateUI(STATE_VERIFY_SUCCESS, credential);
                 signInWithPhoneAuthCredential(credential);
-                if (accountgg == null) {
-                 /*   signInWithPhoneAuthCredential(credential);*/
-                    Intent intent = new Intent(PhoneAuthActivity.this, MainActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    finish();
-                    startActivity(intent);
-                } else {
-                    AuthCredential credentialGG = GoogleAuthProvider.getCredential(accountgg.getIdToken(), null);
-                    linkAccount(credentialGG);
-                }
             }
 
             @Override
@@ -146,6 +160,83 @@ public class PhoneAuthActivity extends AppCompatActivity implements
         mTitle.setText(s);
     }
 
+    public Bitmap getBitmapFromURL(String src) {
+        try {
+            java.net.URL url = new java.net.URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url
+                    .openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            return myBitmap;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void uploadAvatar(Account account) {
+        mStorageRef = FirebaseStorage.getInstance().getReference();
+
+        Bitmap bitmap = getBitmapFromURL(account.getAvartar());
+        StorageReference riversRef = mStorageRef.child("AVATAR/" + account.getId() + ".jpg");
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+
+        UploadTask uploadTask = riversRef.putBytes(data);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+                Toast.makeText(PhoneAuthActivity.this, "Upload avatar fail", Toast.LENGTH_SHORT).show();
+
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                Uri downloadUrl = taskSnapshot.getDownloadUrl();
+            }
+        });
+    }
+
+    private Account initAccount() {
+        Account account = new Account();
+        FirebaseUser user = mAuth.getCurrentUser();
+        account.setId(user.getUid());
+        account.setPhone(user.getPhoneNumber());
+        account.setEmail(user.getEmail());
+        if (accountgg != null) {
+            account.setFirst_name(accountgg.getGivenName());
+            account.setLast_name(accountgg.getFamilyName());
+            account.setAvartar(accountgg.getPhotoUrl().toString());
+            uploadAvatar(account);
+        }
+        return account;
+    }
+
+    private void createUserData() {
+        final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_ACCOUNT);
+        DatabaseReference users = root.child(mAuth.getCurrentUser().getUid());
+        users.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    Toast.makeText(PhoneAuthActivity.this, "ACcount created", Toast.LENGTH_SHORT).show();
+                } else {
+                    root.child(mAuth.getCurrentUser().getUid()).setValue(initAccount());
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
     private void getDataFromIntent() {
         phone = getIntent().getStringExtra("phonenumber");
         accountgg = getIntent().getParcelableExtra("account");
@@ -157,20 +248,25 @@ public class PhoneAuthActivity extends AppCompatActivity implements
     }
 
     private void linkAccount(AuthCredential authCredential) {
-        mAuth.getCurrentUser().linkWithCredential(authCredential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-            @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
-                if (task.isSuccessful()) {
-                    Intent intent = new Intent(PhoneAuthActivity.this, MainActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    finish();
-                    startActivity(intent);
-                } else {
-                    Toast.makeText(PhoneAuthActivity.this,
-                            getString(R.string.error_happened).toString(), Toast.LENGTH_SHORT).show();
+        if (mAuth.getCurrentUser() != null) {
+            mAuth.getCurrentUser().linkWithCredential(authCredential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if (task.isSuccessful()) {
+                        Log.d("hieuhk", "onComplete: link account ");
+                        Intent intent = new Intent(PhoneAuthActivity.this, UserTypeActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        finish();
+                        startActivity(intent);
+                    } else {
+                        Log.d("hieuhk", "failer: link account " + task.getException());
+                        Toast.makeText(PhoneAuthActivity.this,
+                                getString(R.string.error_happened).toString(), Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
-        });
+
+            });
+        }
     }
 
     @Override
@@ -252,8 +348,9 @@ public class PhoneAuthActivity extends AppCompatActivity implements
 
     private void verifyPhoneNumberWithCode(String verificationId, String code) {
         PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, code);
-        // [END verify_with_code]
         signInWithPhoneAuthCredential(credential);
+        // [END verify_with_code]
+
     }
 
     // resend verify code
@@ -276,8 +373,16 @@ public class PhoneAuthActivity extends AppCompatActivity implements
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "signInWithCredential:success");
-                            FirebaseUser user = task.getResult().getUser();
-                            updateUI(STATE_SIGNIN_SUCCESS, user);
+                            createUserData();
+                            if (accountgg == null) {
+                                Intent intent = new Intent(PhoneAuthActivity.this, UserTypeActivity.class);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                finish();
+                                startActivity(intent);
+                            } else {
+                                AuthCredential credentialGG = GoogleAuthProvider.getCredential(accountgg.getIdToken(), null);
+                                linkAccount(credentialGG);
+                            }
                         } else {
                             Log.w(TAG, "signInWithCredential:failure", task.getException());
                             if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
@@ -313,24 +418,19 @@ public class PhoneAuthActivity extends AppCompatActivity implements
     private void updateUI(int uiState, FirebaseUser user, PhoneAuthCredential cred) {
         switch (uiState) {
             case STATE_INITIALIZED:
-                disableViews(mVerifyButton, mVerificationField);
                 mDetailText.setText(null);
                 break;
             case STATE_CODE_SENT:
                 // Code sent state, show the verification field, the
-                enableViews(mVerifyButton, mVerificationField);
                 mDetailText.setText(R.string.status_code_sent);
                 break;
             case STATE_VERIFY_FAILED:
                 // Verification has failed, show all options
-                enableViews(mVerifyButton, mVerificationField);
                 mDetailText.setText(R.string.status_verification_failed);
                 break;
             case STATE_VERIFY_SUCCESS:
                 // Verification has succeeded, proceed to firebase sign in
-                disableViews(mVerifyButton, mVerificationField);
                 mDetailText.setText(R.string.status_verification_succeeded);
-
                 // Set the verification text based on the credential
                 if (cred != null) {
                     if (cred.getSmsCode() != null) {
@@ -357,11 +457,7 @@ public class PhoneAuthActivity extends AppCompatActivity implements
         } else {
             // Signed in
             mPhoneNumberViews.setVisibility(View.GONE);
-
-
-            enableViews(mVerificationField);
             mVerificationField.setText(null);
-
             mStatusText.setText(R.string.signed_in);
             mDetailText.setText(getString(R.string.firebase_status_fmt, user.getUid()));
         }
@@ -377,17 +473,6 @@ public class PhoneAuthActivity extends AppCompatActivity implements
         return true;
     }
 
-    private void enableViews(View... views) {
-        for (View v : views) {
-            v.setEnabled(true);
-        }
-    }
-
-    private void disableViews(View... views) {
-        for (View v : views) {
-            v.setEnabled(false);
-        }
-    }
 
     // onclick listener
     @Override
@@ -406,6 +491,9 @@ public class PhoneAuthActivity extends AppCompatActivity implements
                 break;
             case R.id.txtHelp:
                 showHelpDialog();
+                break;
+            case R.id.button_prvious:
+                onBackPressed();
                 break;
         }
     }

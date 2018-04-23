@@ -1,13 +1,16 @@
 package com.example.hoang.myapplication.Aunthencation;
 
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatEditText;
-import android.util.Log;
+import android.text.SpannableStringBuilder;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -15,13 +18,7 @@ import android.widget.Toast;
 
 import com.example.hoang.myapplication.R;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.rilixtech.CountryCodePicker;
 
 public class VerifyInformation extends AppCompatActivity {
@@ -29,8 +26,8 @@ public class VerifyInformation extends AppCompatActivity {
     private EditText edtName, edtHo, edtEmail;
     private AppCompatEditText edtPhone;
     private CountryCodePicker countryCodePicker;
-    private ImageButton next;
-    private TextView txtError;
+    private ImageButton next, back;
+    private TextView txtError, txtPolicy;
     private FirebaseAuth mAuth;
 
     @Override
@@ -44,9 +41,11 @@ public class VerifyInformation extends AppCompatActivity {
         edtName = (EditText) findViewById(R.id.edtName);
         edtPhone = (AppCompatEditText) findViewById(R.id.phone_number_edt);
         next = (ImageButton) findViewById(R.id.button_next);
+        back = (ImageButton) findViewById(R.id.button_prvious);
         countryCodePicker = (CountryCodePicker) findViewById(R.id.ccp);
         countryCodePicker.registerPhoneNumberTextView(edtPhone);
         txtError = (TextView) findViewById(R.id.txtError);
+        txtPolicy = (TextView) findViewById(R.id.txtPolicy);
         if (accountgg != null) {
             edtEmail.setText(accountgg.getEmail());
             edtName.setText(accountgg.getGivenName());
@@ -58,12 +57,47 @@ public class VerifyInformation extends AppCompatActivity {
             public void onClick(View v) {
                 if (checkInputField()) {
                     Intent intent = new Intent(VerifyInformation.this, PhoneAuthActivity.class);
-                    intent.putExtra("account",accountgg);
-                    intent.putExtra("phonenumber",countryCodePicker.getFullNumberWithPlus());
+                    intent.putExtra("account", accountgg);
+                    intent.putExtra("phonenumber", countryCodePicker.getFullNumberWithPlus());
                     startActivity(intent);
                 }
             }
         });
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+        makingPolicyText(txtPolicy);
+    }
+
+    private void makingPolicyText(TextView view) {
+        String accept = getString(R.string.policy_accept).toString();
+        String term = getString(R.string.term_title).toString();
+        String policy = getString(R.string.policy_title).toString();
+        SpannableStringBuilder spanTxt = new SpannableStringBuilder(accept);
+        spanTxt.append(term);
+        spanTxt.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://hoangkhachieu96.wixsite.com/here"));
+                startActivity(browserIntent);
+            }
+        }, spanTxt.length() - term.length(), spanTxt.length(), 0);
+        int current = spanTxt.length();
+        spanTxt.append(getString(R.string.and).toString());
+        spanTxt.setSpan(new ForegroundColorSpan(Color.BLACK), current, spanTxt.length(), 0);
+        spanTxt.append(policy);
+        spanTxt.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://hoangkhachieu96.wixsite.com/here"));
+                startActivity(browserIntent);
+            }
+        }, spanTxt.length() - policy.length(), spanTxt.length(), 0);
+        view.setMovementMethod(LinkMovementMethod.getInstance());
+        view.setText(spanTxt, TextView.BufferType.SPANNABLE);
     }
 
     private boolean checkInputField() {

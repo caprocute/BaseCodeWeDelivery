@@ -8,6 +8,7 @@
          location permissions for the 'MyLocation' functionality. 
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -23,12 +24,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".Aunthencation.SignUpActivity"
-            android:theme="@style/AppTheme" />
-        <activity
-            android:name=".Aunthencation.PhoneAuthActivity"
-            android:theme="@style/AppTheme" />
+        <activity android:name=".Aunthencation.SignUpActivity" />
+        <activity android:name=".Aunthencation.PhoneAuthActivity" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -41,13 +38,13 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity android:name=".Aunthencation.GoogleAuthActivity" />
         <activity android:name=".Aunthencation.VerifyInformation" />
-        <activity android:name=".Aunthencation.AnonymousAuthActivity" />
         <activity
+            android:theme="@style/Mapstyle"
             android:name=".MainActivity"
-            android:label="@string/title_activity_main"
-          ></activity>
+            android:label="@string/title_activity_main" />
+        <activity android:name=".UserTypeActivity"></activity>
+
     </application>
 
 </manifest>

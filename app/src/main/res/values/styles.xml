@@ -9,6 +9,10 @@
         <item name="android:textColorSecondary">@color/blacktxt</item>
     </style>
 
+    <style name="Mapstyle" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
 
     <style name="NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:colorPrimaryDark">@color/appColor</item>
