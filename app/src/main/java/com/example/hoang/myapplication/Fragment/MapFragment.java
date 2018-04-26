@@ -53,7 +53,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
     private final LatLng mDefaultLocation = new LatLng(-33.8523341, 151.2106085);
-    private static final int DEFAULT_ZOOM = 15;
+    private static final int DEFAULT_ZOOM = 13;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean mLocationPermissionGranted;
 
@@ -367,11 +367,57 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onClick(final View v) {
         getDeviceLocation();
         if (mLastKnownLocation != null) {
-            Toast.makeText(getActivity(), "getLatitude=" + mLastKnownLocation.getLatitude() + "getLongitude" + mLastKnownLocation.getLongitude(), Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "onClick: " + "getLatitude=" + mLastKnownLocation.getLatitude() + "getLongitude" + mLastKnownLocation.getLongitude());
+            calculatorMaxdistance();
         }
     }
 
     private void getNearestDriver() {
+     /*   final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_ACCOUNT);
+        DatabaseReference users = root.child(mAuth.getCurrentUser().getUid());
+        users.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    Toast.makeText(PhoneAuthActivity.this, "ACcount created", Toast.LENGTH_SHORT).show();
+                } else {
+                    root.child(mAuth.getCurrentUser().getUid()).setValue(initAccount());
+                }
+            }
 
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });*/
     }
+
+    private void calculatorMaxdistance() {
+
+        double lat1rad = degreesToRadians(mLastKnownLocation.getLatitude());    // latitude to radian
+        double long1rad = degreesToRadians(mLastKnownLocation.getLongitude());  // longitude to radian
+
+        double d = 5000;    // distance of radar
+        double R = 6371e3;  // earth R
+        double brng = degreesToRadians(0.0);  //bearing to radian
+
+        double lat2rad = Math.asin(Math.sin(lat1rad) * Math.cos(d / R) + Math.cos(lat1rad) * Math.sin(d / R) * Math.cos(brng));
+        double logn2rad = long1rad + Math.atan2(Math.sin(brng) * Math.sin(d / R) * Math.cos(lat1rad), Math.cos(d / R) - Math.sin(lat1rad) * Math.sin(lat2rad));
+
+        Log.d(TAG, "getLatitude max=" + lat2rad + "getLongitude max =lư" + logn2rad);
+
+        double lat2de = radianToDegree(lat2rad);
+        double long2de = radianToDegree(logn2rad);
+    }
+
+    public double degreesToRadians(Double degrees) {
+        return degrees * Math.PI / 180;
+    }
+
+    public double radianToDegree(Double rad) {
+        return (180 / Math.PI) * rad;
+    }
+
+    private class Coordinate()
+
 }
