@@ -1,5 +1,10 @@
 <resources>
     <!-- main source-->
+    <string name="count_text">lượt sử dụng</string>
+    <string name="rating_2_star">Cố gắng không ngừng</string>
+    <string name="rating_3_star">Khởi đầu may mắn</string>
+    <string name="rating_4_star">Luôn luôn chăm chỉ</string>
+    <string name="rating_5_star">Đối tác tuyệt vời!</string>
     <string name="app_name">Here</string>
     <string name="welcome">Kết nối với Here</string>
     <string name="connect_soicity">Hoặc kết nối với mạng xã hội</string>
@@ -39,6 +44,7 @@
     <string name="menu_share">Giới thiệu bạn bè</string>
     <string name="menu_noti">Thông báo</string>
     <string name="menu_setting">Cài đặt</string>
+    <string name="menu_mailbox">Hòm thư</string>
     <string name="menu_driver">Lái xe cùng Here</string>
     <string name="menu_policy">Pháp lý</string>
     <string name="menu_contact">Tài xế ưa thích</string>
@@ -133,4 +139,5 @@
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_personal">PersonalActivity</string>
 </resources>

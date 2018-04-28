@@ -17,7 +17,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/NoActionBar">
-        <activity android:name=".LauncherActivity">
+        <activity android:name=".UI.LauncherActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -40,11 +40,14 @@
 
         <activity android:name=".Aunthencation.VerifyInformation" />
         <activity
-            android:theme="@style/Mapstyle"
-            android:name=".MainActivity"
-            android:label="@string/title_activity_main" />
-        <activity android:name=".UserTypeActivity"></activity>
-
+            android:name=".UI.MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/Mapstyle" />
+        <activity android:name=".UI.UserTypeActivity" />
+        <activity
+            android:name=".UI.PersonalActivity"
+            android:label="@string/title_activity_personal"
+            android:theme="@style/NoActionBar"></activity>
     </application>
 
 </manifest>

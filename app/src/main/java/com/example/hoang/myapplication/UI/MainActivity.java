@@ -1,12 +1,9 @@
-package com.example.hoang.myapplication;
+package com.example.hoang.myapplication.UI;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -15,16 +12,38 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
+import android.view.View;
+import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.hoang.myapplication.Fragment.MapFragment;
+import com.example.hoang.myapplication.Model.Account;
+import com.example.hoang.myapplication.R;
+import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
     private Fragment fragment;
     private FragmentManager fragmentManager = getFragmentManager();
     private FirebaseAuth mAuth;
+    private FirebaseUser user;
+    private StorageReference mStorageRef;
+    private CircleImageView profileImage;
+    private TextView txtHeaderName;
+    private final String CHILD_ACCOUNT = "ACCOUNT";
+    private Account userData;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,11 +59,32 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        View header = navigationView.getHeaderView(0);
+        profileImage = (CircleImageView) header.findViewById(R.id.profile_image);
+        txtHeaderName = (TextView) header.findViewById(R.id.txtheader_name);
 
-        mAuth = FirebaseAuth.getInstance();
         fragment = new MapFragment();
         fragmentManager.beginTransaction().replace(R.id.main_container, fragment).commit();
-        Toast.makeText(this, mAuth.getCurrentUser().getEmail(), Toast.LENGTH_SHORT).show();
+
+        final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_ACCOUNT);
+        mAuth = FirebaseAuth.getInstance();
+        user = mAuth.getCurrentUser();
+        mStorageRef = FirebaseStorage.getInstance().getReference();
+        DatabaseReference userRoot = root.child(user.getUid());
+        userRoot.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    userData = dataSnapshot.getValue(Account.class);
+                    loadData(userData);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     @Override
@@ -98,7 +138,7 @@ public class MainActivity extends AppCompatActivity
         } else*/
         if (id == R.id.menu_policy) {
             mAuth.signOut();
-            Intent intent= new Intent(MainActivity.this,LauncherActivity.class);
+            Intent intent = new Intent(MainActivity.this, LauncherActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             finish();
             startActivity(intent);
@@ -109,5 +149,33 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    private void loadAvatar() {
+        StorageReference riversRef = mStorageRef.child("AVATAR/" + user.getUid() + ".jpg");
+        Glide.with(this /* context */)
+                .using(new FirebaseImageLoader())
+                .load(riversRef)
+                .into(profileImage);
+        profileImage.setOnClickListener(this);
+    }
 
+    private void loadData(Account account) {
+        txtHeaderName.setText(account.getFirst_name() + " " + account.getLast_name());
+        loadAvatar();
+    }
+
+    @Override
+    public void onClick(final View v) {
+        switch (v.getId()) {
+            case R.id.profile_image:
+                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+                drawer.closeDrawer(GravityCompat.START);
+                Intent intent = new Intent(MainActivity.this,PersonalActivity.class);
+                startActivity(intent);
+                break;
+            case R.id.test_driver:
+                break;
+            case R.id.btnNearDriver:
+                break;
+        }
+    }
 }

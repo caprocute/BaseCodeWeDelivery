@@ -1,4 +1,4 @@
-package com.example.hoang.myapplication;
+package com.example.hoang.myapplication.UI;
 
 import android.content.Intent;
 import android.os.Handler;
@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.hoang.myapplication.Aunthencation.SignUpActivity;
+import com.example.hoang.myapplication.R;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.rilixtech.CountryCodePicker;

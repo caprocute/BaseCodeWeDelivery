@@ -9,16 +9,27 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
+import android.widget.ImageButton;
 
+import com.example.hoang.myapplication.Adapter.OnStartDragListener;
+import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
+import com.example.hoang.myapplication.Adapter.SimpleItemTouchHelperCallback;
+import com.example.hoang.myapplication.Model.DriverPostion;
+import com.example.hoang.myapplication.Model.TripRequest;
 import com.example.hoang.myapplication.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -38,15 +49,33 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener {
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener,OnStartDragListener {
     private String TAG = "MapFragment";
     private CameraPosition mCameraPosition;
     private GoogleMap mMap;
+    private final String CHILD_DRIVER_POSTION = "DRIVER_POSTION";
+    private final String CHILD_CAR_POSTION = "CAR_POSTION";
+    private final String CHILD_MOTOR_POSTION = "MOTOR_POSTION";
     // The entry points to the Places API.
     private GeoDataClient mGeoDataClient;
     private PlaceDetectionClient mPlaceDetectionClient;
     private Button btnCurrentPlace;
+    private Button btnTestDriver;
+    private Button btnNearDriver;
+    private ImageButton btnMenu;
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient mFusedLocationProviderClient;
 
@@ -71,8 +100,36 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private String[] mLikelyPlaceAddresses;
     private String[] mLikelyPlaceAttributions;
     private LatLng[] mLikelyPlaceLatLngs;
-    MapView mapView;
+    private MapView mapView;
+    private RecyclerView lisDestination;
+    private Map<String, DriverPostion> driverPostions = new HashMap<>();
+    private ItemTouchHelper mItemTouchHelper;
+    @Override
+    public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
+        mItemTouchHelper.startDrag(viewHolder);
+    }
+    private void initDestinationRecycle(){
+        List<TripRequest> tripRequests= new ArrayList<>();
+        TripRequest request = new TripRequest();
+        request.setId("123123123");
+        request.setDestination(mDefaultLocation);
+        request.setMoney(100000);
+        request.setNote("do noting");
+        request.setReceiverName("hieu");
+        request.setReceiverNumber("123123");
+        request.setTripID("12391209310");
+        tripRequests.add(request);
+        RecyclerListAdapter adapter = new RecyclerListAdapter(getActivity(), this,tripRequests);
 
+        RecyclerView recyclerView = (RecyclerView) getView().findViewById(R.id.listDestionation);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(adapter);
+        mItemTouchHelper = new ItemTouchHelper(callback);
+        mItemTouchHelper.attachToRecyclerView(recyclerView);
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (savedInstanceState != null) {
@@ -88,12 +145,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
         //initialize map
         mapView = (MapView) rootView.findViewById(R.id.mapView);
+        btnMenu = (ImageButton) rootView.findViewById(R.id.btn_menu);
+        lisDestination=(RecyclerView) rootView.findViewById(R.id.listDestionation);
+        btnMenu.setOnClickListener(this);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
         showCurrentPlace();
         return rootView;
     }
-
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState){
+        initDestinationRecycle();
+    }
     @Override
     public void onResume() {
         mapView.onResume();
@@ -125,7 +188,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     public void onMapReady(GoogleMap map) {
         mMap = map;
         btnCurrentPlace = (Button) getView().findViewById(R.id.btnCurrentPlace);
+        btnTestDriver = (Button) getView().findViewById(R.id.test_driver);
+        btnNearDriver = (Button) getView().findViewById(R.id.btnNearDriver);
         btnCurrentPlace.setOnClickListener(this);
+        btnTestDriver.setOnClickListener(this);
+        btnNearDriver.setOnClickListener(this);
         // Use a custom info window adapter to handle multiple lines of text in the
         // info window contents.
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
@@ -351,7 +418,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         try {
             if (mLocationPermissionGranted) {
                 mMap.setMyLocationEnabled(true);
-                mMap.getUiSettings().setMyLocationButtonEnabled(true);
+                mMap.getUiSettings().setMyLocationButtonEnabled(false);
             } else {
                 mMap.setMyLocationEnabled(false);
                 mMap.getUiSettings().setMyLocationButtonEnabled(false);
@@ -363,61 +430,256 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         }
     }
 
+    private void addCarMarker(LatLng latLng, Float bearing) {
+        int height = 150;
+        int width = 75;
+        BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_car_marker);
+        Bitmap b = bitmapdraw.getBitmap();
+        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+        Random random = new Random();
+        bearing = 0 + (360 - 0) * random.nextFloat();
+
+        mMap.addMarker(new MarkerOptions()
+                .title("top")
+                .position(latLng)
+                .rotation(bearing)
+                .flat(true)
+                .snippet(null))
+                .setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
+    }
+
     @Override
     public void onClick(final View v) {
-        getDeviceLocation();
-        if (mLastKnownLocation != null) {
-            Log.d(TAG, "onClick: " + "getLatitude=" + mLastKnownLocation.getLatitude() + "getLongitude" + mLastKnownLocation.getLongitude());
-            calculatorMaxdistance();
+        switch (v.getId()) {
+            case R.id.btnCurrentPlace:
+                getDeviceLocation();
+                break;
+            case R.id.test_driver:
+                setFakeDriver();
+                break;
+            case R.id.btnNearDriver:
+                getNearestDriver();
+                break;
+            case R.id.btn_menu:
+                DrawerLayout drawer = (DrawerLayout) getActivity().findViewById(R.id.drawer_layout);
+                drawer.openDrawer(Gravity.LEFT);
+                break;
         }
     }
 
-    private void getNearestDriver() {
-     /*   final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_ACCOUNT);
-        DatabaseReference users = root.child(mAuth.getCurrentUser().getUid());
-        users.addListenerForSingleValueEvent(new ValueEventListener() {
+    ArrayList<LatLng> latLngsThread = new ArrayList<>();
+
+    private void createRandomDriver(double minx, double miny, double maxx, double maxy) {
+        ArrayList<LatLng> latLngs = new ArrayList<>();
+        final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_DRIVER_POSTION);
+        final DatabaseReference rootCar = root.child(CHILD_CAR_POSTION);
+        rootCar.removeValue();
+        Random random = new Random();
+        mMap.clear();
+        for (int i = 0; i < 10; i++) {
+            double xcode = minx + (maxx - minx) * random.nextDouble();
+            double ycode = miny + (maxy - miny) * random.nextDouble();
+            LatLng latLng = new LatLng(ycode, xcode);
+            addCarMarker(latLng, null);
+            latLngs.add(latLng);
+        }
+        DriverPostion driverPostion1 = new DriverPostion();
+        DriverPostion driverPostion2 = new DriverPostion();
+        DriverPostion driverPostion3 = new DriverPostion();
+        DriverPostion driverPostion4 = new DriverPostion();
+        DriverPostion driverPostion5 = new DriverPostion();
+
+        driverPostion1.setDriverID("DR1" + true);
+        driverPostion2.setDriverID("DR2" + true);
+        driverPostion3.setDriverID("DR3" + false);
+        driverPostion4.setDriverID("DR4" + false);
+        driverPostion5.setDriverID("DR5" + false);
+
+        driverPostion1.setLangtitude(17.449903);
+        driverPostion1.setLongitude(106.603251);
+        driverPostion1.setCoordi(driverPostion1.getLangtitude() + "|" + driverPostion1.getLongitude());
+        driverPostion1.setBearing(0);
+
+        driverPostion2.setLangtitude(17.444294);
+        driverPostion2.setLongitude(106.598487);
+        driverPostion2.setCoordi(driverPostion2.getLangtitude() + "|" + driverPostion2.getLongitude());
+        driverPostion2.setBearing(0);
+
+        driverPostion3.setLangtitude(17.535421);
+        driverPostion3.setLongitude(106.564076);
+        driverPostion3.setCoordi(driverPostion3.getLangtitude() + "|" + driverPostion3.getLongitude());
+        driverPostion3.setBearing(0);
+
+        driverPostion4.setLangtitude(17.541407);
+        driverPostion4.setLongitude(106.615934);
+        driverPostion4.setCoordi(driverPostion4.getLangtitude() + "|" + driverPostion4.getLongitude());
+        driverPostion4.setBearing(0);
+
+        driverPostion5.setLangtitude(17.370698);
+        driverPostion5.setLongitude(106.748358);
+        driverPostion5.setCoordi(driverPostion5.getLangtitude() + "|" + driverPostion5.getLongitude());
+        driverPostion5.setBearing(0);
+
+        rootCar.child(driverPostion1.getDriverID()).setValue(driverPostion1);
+        rootCar.child(driverPostion2.getDriverID()).setValue(driverPostion2);
+        rootCar.child(driverPostion3.getDriverID()).setValue(driverPostion3);
+        rootCar.child(driverPostion4.getDriverID()).setValue(driverPostion4);
+        rootCar.child(driverPostion5.getDriverID()).setValue(driverPostion5);
+
+        addCarMarker(new LatLng(driverPostion1.getLangtitude(), driverPostion1.getLongitude()), null);
+        addCarMarker(new LatLng(driverPostion2.getLangtitude(), driverPostion2.getLongitude()), null);
+        addCarMarker(new LatLng(driverPostion3.getLangtitude(), driverPostion3.getLongitude()), null);
+        addCarMarker(new LatLng(driverPostion4.getLangtitude(), driverPostion4.getLongitude()), null);
+        addCarMarker(new LatLng(driverPostion5.getLangtitude(), driverPostion5.getLongitude()), null);
+        // put driver to database
+        for (int i = 0; i < 10; i++) {
+
+            float xcode = 0 + (360 - 0) * random.nextFloat();
+
+            DriverPostion driverPostion = new DriverPostion();
+
+            driverPostion.setDriverID("DR" + i);
+            driverPostion.setLangtitude(latLngs.get(i).latitude);
+            driverPostion.setLongitude(latLngs.get(i).longitude);
+            driverPostion.setCoordi(driverPostion.getLangtitude() + "|" + driverPostion.getLongitude());
+            driverPostion.setBearing(xcode);
+            driverPostion.setDriverType(1);
+            driverPostion.setStatus(0);
+            rootCar.child(driverPostion.getDriverID()).setValue(driverPostion);
+        }
+        latLngsThread = latLngs;
+        Thread thread = new Thread(new Runnable() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    Toast.makeText(PhoneAuthActivity.this, "ACcount created", Toast.LENGTH_SHORT).show();
-                } else {
-                    root.child(mAuth.getCurrentUser().getUid()).setValue(initAccount());
+            public void run() {
+                for (int j = 0; j < 60; j++) {
+                    SystemClock.sleep(1000);
+                    Log.d("hieuhk", "run: " + j);
+                    for (int i = 0; i < 10; i++) {
+
+                        Random random = new Random();
+                        latLngsThread.set(i, new LatLng(latLngsThread.get(i).latitude + 0.01, latLngsThread.get(i).longitude + 0.01));
+                        float xcode = 0 + (360 - 0) * random.nextFloat();
+                        //nghỉ 200 mili second
+
+                        DriverPostion driverPostion = new DriverPostion();
+                        driverPostion.setDriverID("DR" + i);
+                        driverPostion.setLangtitude(latLngsThread.get(i).latitude);
+                        driverPostion.setLongitude(latLngsThread.get(i).longitude);
+                        driverPostion.setCoordi(driverPostion.getLangtitude() + "|" + driverPostion.getLongitude());
+                        driverPostion.setDriverType(1);
+                        driverPostion.setStatus(0);
+                        rootCar.child(driverPostion.getDriverID()).setValue(driverPostion);
+                    }
                 }
             }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });*/
+        });
+        //start thread
+        thread.start();
     }
 
-    private void calculatorMaxdistance() {
+    private void setFakeDriver() {
+
+        LatLng lineTop = calculatorMaxdistance(0.0);
+        LatLng lineLeft = calculatorMaxdistance(-90.0);
+        LatLng lineRight = calculatorMaxdistance(90.0);
+        LatLng lineBelow = calculatorMaxdistance(-180.0);
+
+        double maxX = lineRight.longitude;
+        double minX = lineLeft.longitude;
+        double maxY = lineTop.latitude;
+        double minY = lineBelow.latitude;
+
+        createRandomDriver(minX, minY, maxX, maxY);
+    }
+
+    private LatLng calculatorMaxdistance(double bearing) {
+        if (mLastKnownLocation == null) return null;
 
         double lat1rad = degreesToRadians(mLastKnownLocation.getLatitude());    // latitude to radian
         double long1rad = degreesToRadians(mLastKnownLocation.getLongitude());  // longitude to radian
 
         double d = 5000;    // distance of radar
         double R = 6371e3;  // earth R
-        double brng = degreesToRadians(0.0);  //bearing to radian
+        double brng = degreesToRadians(bearing);  //bearing to radian
 
         double lat2rad = Math.asin(Math.sin(lat1rad) * Math.cos(d / R) + Math.cos(lat1rad) * Math.sin(d / R) * Math.cos(brng));
         double logn2rad = long1rad + Math.atan2(Math.sin(brng) * Math.sin(d / R) * Math.cos(lat1rad), Math.cos(d / R) - Math.sin(lat1rad) * Math.sin(lat2rad));
 
-        Log.d(TAG, "getLatitude max=" + lat2rad + "getLongitude max =lư" + logn2rad);
-
         double lat2de = radianToDegree(lat2rad);
         double long2de = radianToDegree(logn2rad);
+
+        LatLng coordinate = new LatLng(lat2de, long2de);
+
+        return coordinate;
     }
 
-    public double degreesToRadians(Double degrees) {
+    private double degreesToRadians(Double degrees) {
         return degrees * Math.PI / 180;
     }
 
-    public double radianToDegree(Double rad) {
+    private double radianToDegree(Double rad) {
         return (180 / Math.PI) * rad;
     }
 
-    private class Coordinate()
+    private void updateMarker(Map<String, DriverPostion> map) {
+        if (!map.isEmpty()) {
+            mMap.clear();
+            for (DriverPostion driverPostion : map.values()) {
+                addCarMarker(new LatLng(driverPostion.getLangtitude(), driverPostion.getLongitude()), driverPostion.getBearing());
+            }
+        }
 
+    }
+
+    private void getNearestDriver() {
+        final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_DRIVER_POSTION);
+        final DatabaseReference rootCar = root.child(CHILD_CAR_POSTION);
+        getDeviceLocation();
+        LatLng lineTop = calculatorMaxdistance(0.0);
+        LatLng lineLeft = calculatorMaxdistance(-90.0);
+        LatLng lineRight = calculatorMaxdistance(90.0);
+        LatLng lineBelow = calculatorMaxdistance(-180.0);
+
+        double maxY = lineRight.longitude;
+        double minY = lineLeft.longitude;
+        double maxX = lineTop.latitude;
+        double minX = lineBelow.latitude;
+        Query querryGetNearestDriver = rootCar.orderByChild("coordi").startAt(minX + "|" + minY).endAt(maxX + "|" + maxY);
+
+        querryGetNearestDriver.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    int dem = 0;
+                    driverPostions.clear();
+                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                        DriverPostion driverPostion = postSnapshot.getValue(DriverPostion.class);
+                        driverPostions.put(driverPostion.getDriverID(), driverPostion);
+                        dem++;
+                    }
+                    if (dem > 2)
+                        updateMarker(driverPostions);
+                    else mMap.clear();
+                }
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        rootCar.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
 }
