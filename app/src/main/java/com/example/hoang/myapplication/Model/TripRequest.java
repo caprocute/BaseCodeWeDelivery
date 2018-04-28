@@ -74,6 +74,24 @@ public class TripRequest {
         this.timeDrop = timeDrop;
     }
 
+    public TripRequest(String id,
+                       String tripID,
+                       String receiverName,
+                       String receiverNumber, LatLng destination,
+                       String note,
+                       float money,
+                       Date timeDrop) {
+        this.id = id;
+        this.tripID = tripID;
+        this.receiverName = receiverName;
+        this.receiverNumber = receiverNumber;
+        this.destination = destination;
+        this.note = note;
+        this.money = money;
+        this.timeDrop = timeDrop;
+
+    }
+
     private LatLng destination;
     private String note;
     private float money;

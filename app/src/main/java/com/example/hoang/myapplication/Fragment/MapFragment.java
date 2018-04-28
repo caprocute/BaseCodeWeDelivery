@@ -62,7 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener,OnStartDragListener {
+public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener, OnStartDragListener {
     private String TAG = "MapFragment";
     private CameraPosition mCameraPosition;
     private GoogleMap mMap;
@@ -104,25 +104,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private RecyclerView lisDestination;
     private Map<String, DriverPostion> driverPostions = new HashMap<>();
     private ItemTouchHelper mItemTouchHelper;
+
     @Override
     public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
         mItemTouchHelper.startDrag(viewHolder);
     }
-    private void initDestinationRecycle(){
-        List<TripRequest> tripRequests= new ArrayList<>();
-        TripRequest request = new TripRequest();
-        request.setId("123123123");
-        request.setDestination(mDefaultLocation);
-        request.setMoney(100000);
-        request.setNote("do noting");
-        request.setReceiverName("hieu");
-        request.setReceiverNumber("123123");
-        request.setTripID("12391209310");
+
+    private void initDestinationRecycle() {
+        List<TripRequest> tripRequests = new ArrayList<>();
+        TripRequest request = new TripRequest("1", "12391209310", null, null, null, null, 0, null);
+        TripRequest request3 = new TripRequest("2", "12391209310", null, null, null, null, 0, null);
+        TripRequest request2 = new TripRequest("3", "12391209310", null, null, null, null, 0, null);
+        TripRequest request4 = new TripRequest("4", "12391209310", null, null, null, null, 0, null);
+        TripRequest request5 = new TripRequest("5", "12391209310", null, null, null, null, 0, null);
         tripRequests.add(request);
-        RecyclerListAdapter adapter = new RecyclerListAdapter(getActivity(), this,tripRequests);
+        tripRequests.add(request2);
+        tripRequests.add(request3);
+        tripRequests.add(request4);
+        tripRequests.add(request5);
+
+
+        RecyclerListAdapter adapter = new RecyclerListAdapter(getActivity(), this, tripRequests);
 
         RecyclerView recyclerView = (RecyclerView) getView().findViewById(R.id.listDestionation);
-        recyclerView.setHasFixedSize(true);
+//        recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
@@ -130,6 +135,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         mItemTouchHelper = new ItemTouchHelper(callback);
         mItemTouchHelper.attachToRecyclerView(recyclerView);
     }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (savedInstanceState != null) {
@@ -146,17 +152,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         //initialize map
         mapView = (MapView) rootView.findViewById(R.id.mapView);
         btnMenu = (ImageButton) rootView.findViewById(R.id.btn_menu);
-        lisDestination=(RecyclerView) rootView.findViewById(R.id.listDestionation);
+        lisDestination = (RecyclerView) rootView.findViewById(R.id.listDestionation);
         btnMenu.setOnClickListener(this);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
         showCurrentPlace();
         return rootView;
     }
+
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState){
+    public void onViewCreated(View view, Bundle savedInstanceState) {
         initDestinationRecycle();
     }
+
     @Override
     public void onResume() {
         mapView.onResume();
