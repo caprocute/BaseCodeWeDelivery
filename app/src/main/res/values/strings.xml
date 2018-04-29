@@ -6,6 +6,9 @@
     <string name="rating_4_star">Luôn luôn chăm chỉ</string>
     <string name="rating_5_star">Đối tác tuyệt vời!</string>
     <string name="app_name">Here</string>
+    <string name="chosse_start_point">Chọn điểm đi</string>
+    <string name="stop_poit">Điểm dừng</string>
+    <string name="destination_point">Điểm đến</string>
     <string name="welcome">Kết nối với Here</string>
     <string name="connect_soicity">Hoặc kết nối với mạng xã hội</string>
     <string name="input_phone_number">Nhập số điện thoại di động</string>

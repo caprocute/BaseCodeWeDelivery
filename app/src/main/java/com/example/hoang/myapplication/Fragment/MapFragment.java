@@ -24,6 +24,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.hoang.myapplication.Adapter.OnStartDragListener;
 import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
@@ -104,6 +106,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private RecyclerView lisDestination;
     private Map<String, DriverPostion> driverPostions = new HashMap<>();
     private ItemTouchHelper mItemTouchHelper;
+    private TextView txtAdd, txtRemove, txtOptimze;
+    private RecyclerListAdapter adapter;
+    List<TripRequest> tripRequests = new ArrayList<>();
 
     @Override
     public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
@@ -111,7 +116,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     }
 
     private void initDestinationRecycle() {
-        List<TripRequest> tripRequests = new ArrayList<>();
+
         TripRequest request = new TripRequest("1", "12391209310", null, null, null, null, 0, null);
         TripRequest request3 = new TripRequest("2", "12391209310", null, null, null, null, 0, null);
         TripRequest request2 = new TripRequest("3", "12391209310", null, null, null, null, 0, null);
@@ -124,9 +129,16 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         tripRequests.add(request5);
 
 
-        RecyclerListAdapter adapter = new RecyclerListAdapter(getActivity(), this, tripRequests);
+        adapter = new RecyclerListAdapter(getActivity(), this, tripRequests);
 
         RecyclerView recyclerView = (RecyclerView) getView().findViewById(R.id.listDestionation);
+        txtAdd = (TextView) getView().findViewById(R.id.txtAdd);
+        txtRemove = (TextView) getView().findViewById(R.id.txtDelete);
+        txtOptimze = (TextView) getView().findViewById(R.id.txtOptimize);
+
+        txtAdd.setOnClickListener(this);
+        txtRemove.setOnClickListener(this);
+        txtOptimze.setOnClickListener(this);
 //        recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -471,6 +483,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
             case R.id.btn_menu:
                 DrawerLayout drawer = (DrawerLayout) getActivity().findViewById(R.id.drawer_layout);
                 drawer.openDrawer(Gravity.LEFT);
+                break;
+            case R.id.txtAdd:
+                if (tripRequests.size() < 5) {
+                    TripRequest request = new TripRequest("6", "12391209310", null, null, null, null, 0, null);
+                    tripRequests.add(request);
+                    adapter.notifyDataSetChanged();
+                } else
+                    Toast.makeText(getActivity(), "Quá số đơn hàng cho phép", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.txtDelete:
+                if (tripRequests.size() > 2) {
+                    tripRequests.remove(tripRequests.size() - 1);
+                    adapter.notifyDataSetChanged();
+                } else
+                    Toast.makeText(getActivity(), "Cần tối thiểu điểm đi và điểm đến", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.txtOptimize:
+
                 break;
         }
     }

@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.hoang.myapplication.Model.TripRequest;
 import com.example.hoang.myapplication.R;
@@ -44,17 +45,19 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
         Log.d("hieuhk", "onBindViewHolder: " + position + " " + mItems.get(position).getId());
         holder.txtBusstopName.setText(mItems.get(holder.getAdapterPosition()).getId().toString());
         if (holder.getAdapterPosition() == 0) {
+            holder.txtBusstopName.setText(context.getString(R.string.chosse_start_point));
             holder.imgConnectLineTop.setVisibility(View.GONE);
             holder.imgTripRequest.setVisibility(View.GONE);
             holder.imgBusstop.setImageDrawable(context.getDrawable(R.drawable.ic_circle_green));
+        } else if (holder.getAdapterPosition() == getItemCount() - 1) {
+            holder.imgConnectLineBellow.setVisibility(View.GONE);
+            holder.imgBusstop.setImageDrawable(context.getDrawable(R.drawable.ic_circle_red));
+            holder.txtBusstopName.setText(context.getString(R.string.destination_point));
         } else {
+            holder.imgBusstop.setImageDrawable(context.getDrawable(R.drawable.ic_circle_red));
+            holder.txtBusstopName.setText(context.getString(R.string.stop_poit));
             holder.imgTripRequest.setVisibility(View.VISIBLE);
             holder.imgConnectLineTop.setVisibility(View.VISIBLE);
-            holder.imgBusstop.setImageDrawable(context.getDrawable(R.drawable.ic_circle_red));
-        }
-        if (holder.getAdapterPosition() == getItemCount() - 1) {
-            holder.imgConnectLineBellow.setVisibility(View.GONE);
-        } else {
             holder.imgConnectLineBellow.setVisibility(View.VISIBLE);
         }
         // Start a drag whenever the handle view it touched
@@ -71,9 +74,11 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
 
     @Override
     public void onItemDismiss(int position) {
-        mItems.remove(position);
-        notifyItemRemoved(position);
-        notifyDataSetChanged();
+        if (mItems.size() > 1) {
+            mItems.remove(position);
+            notifyItemRemoved(position);
+            notifyDataSetChanged();
+        } else Toast.makeText(context, "cannot delete", Toast.LENGTH_SHORT).show();
     }
 
     @Override
