@@ -8,6 +8,7 @@
          location permissions for the 'MyLocation' functionality. 
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -47,7 +48,11 @@
         <activity
             android:name=".UI.PersonalActivity"
             android:label="@string/title_activity_personal"
-            android:theme="@style/NoActionBar"></activity>
+            android:theme="@style/NoActionBar" />
+        <activity
+            android:name=".UI.RequestActivity"
+            android:theme="@style/Base.Theme.AppCompat.Light.DarkActionBar"></activity>
+        <activity android:name=".Fragment.DriverMap"></activity>
     </application>
 
 </manifest>

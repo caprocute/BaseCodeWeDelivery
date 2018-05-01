@@ -11,6 +11,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -24,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -64,8 +66,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback, View.OnClickListener, OnStartDragListener {
-    private String TAG = "MapFragment";
+public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClickListener, OnStartDragListener {
+    private String TAG = "UserMap";
     private CameraPosition mCameraPosition;
     private GoogleMap mMap;
     private final String CHILD_DRIVER_POSTION = "DRIVER_POSTION";
@@ -108,7 +110,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private ItemTouchHelper mItemTouchHelper;
     private TextView txtAdd, txtRemove, txtOptimze;
     private RecyclerListAdapter adapter;
-    List<TripRequest> tripRequests = new ArrayList<>();
+    private List<TripRequest> tripRequests = new ArrayList<>();
+    private CoordinatorLayout optionUI;
+    private ImageView imgBikeMode, imgCarMode;
+    // true is bike mode, false is car mode
+    private boolean vehicleMode = true;
 
     @Override
     public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
@@ -118,15 +124,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private void initDestinationRecycle() {
 
         TripRequest request = new TripRequest("1", "12391209310", null, null, null, null, 0, null);
-        TripRequest request3 = new TripRequest("2", "12391209310", null, null, null, null, 0, null);
-        TripRequest request2 = new TripRequest("3", "12391209310", null, null, null, null, 0, null);
-        TripRequest request4 = new TripRequest("4", "12391209310", null, null, null, null, 0, null);
-        TripRequest request5 = new TripRequest("5", "12391209310", null, null, null, null, 0, null);
         tripRequests.add(request);
-        tripRequests.add(request2);
-        tripRequests.add(request3);
-        tripRequests.add(request4);
-        tripRequests.add(request5);
+        tripRequests.add(request);
 
 
         adapter = new RecyclerListAdapter(getActivity(), this, tripRequests);
@@ -204,15 +203,28 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
         mapView.onDestroy();
     }
 
+    private void updateUI(boolean check) {
+        optionUI = (CoordinatorLayout) getView().findViewById(R.id.listDestionationGroup);
+        if (check) optionUI.setVisibility(View.VISIBLE);
+        else optionUI.setVisibility(View.GONE);
+
+    }
+
     @Override
     public void onMapReady(GoogleMap map) {
         mMap = map;
         btnCurrentPlace = (Button) getView().findViewById(R.id.btnCurrentPlace);
         btnTestDriver = (Button) getView().findViewById(R.id.test_driver);
         btnNearDriver = (Button) getView().findViewById(R.id.btnNearDriver);
+        imgBikeMode = (ImageView) getView().findViewById(R.id.img_bike_mode);
+        imgCarMode = (ImageView) getView().findViewById(R.id.img_car_mode);
+
+        imgCarMode.setOnClickListener(this);
+        imgBikeMode.setOnClickListener(this);
         btnCurrentPlace.setOnClickListener(this);
         btnTestDriver.setOnClickListener(this);
         btnNearDriver.setOnClickListener(this);
+
         // Use a custom info window adapter to handle multiple lines of text in the
         // info window contents.
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
@@ -228,7 +240,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                 return null;
             }
         });
-
+        mMap.setOnCameraMoveListener(new GoogleMap.OnCameraMoveListener() {
+            @Override
+            public void onCameraMove() {
+                Log.d(TAG, "onCameraMove: ");
+                updateUI(false);
+            }
+        });
+        mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
+            @Override
+            public void onCameraIdle() {
+                Log.d(TAG, "onCameraIdle: ");
+                updateUI(true);
+            }
+        });
         // Prompt the user for permission.
         getLocationPermission();
 
@@ -237,6 +262,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
+
+
     }
 
     private void getDeviceLocation() {
@@ -453,7 +480,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
     private void addCarMarker(LatLng latLng, Float bearing) {
         int height = 150;
         int width = 75;
-        BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_car_marker);
+        BitmapDrawable bitmapdraw = new BitmapDrawable();
+        if (!vehicleMode) {
+            bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_car_marker);
+
+        } else {
+            bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_moto_marker);
+        }
         Bitmap b = bitmapdraw.getBitmap();
         Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
         Random random = new Random();
@@ -490,7 +523,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                     tripRequests.add(request);
                     adapter.notifyDataSetChanged();
                 } else
-                    Toast.makeText(getActivity(), "Quá số đơn hàng cho phép", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Tối đa 5 đơn hàng", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.txtDelete:
                 if (tripRequests.size() > 2) {
@@ -500,9 +533,27 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
                     Toast.makeText(getActivity(), "Cần tối thiểu điểm đi và điểm đến", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.txtOptimize:
-
+                break;
+            case R.id.img_bike_mode:
+                setVehicleMode(true);
+                break;
+            case R.id.img_car_mode:
+                setVehicleMode(false);
                 break;
         }
+    }
+
+    private void setVehicleMode(Boolean mode) {
+        vehicleMode = mode;
+        getDeviceLocation();
+        if (vehicleMode) {
+            imgBikeMode.setImageDrawable(getActivity().getDrawable(R.drawable.ic_motor_mode));
+            imgCarMode.setImageDrawable(getActivity().getDrawable(R.drawable.ic_car_mode_grey));
+        } else {
+            imgBikeMode.setImageDrawable(getActivity().getDrawable(R.drawable.ic_motor_mode_gray));
+            imgCarMode.setImageDrawable(getActivity().getDrawable(R.drawable.ic_car_mode));
+        }
+        setFakeDriver();
     }
 
     ArrayList<LatLng> latLngsThread = new ArrayList<>();
@@ -719,5 +770,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, View.On
 
             }
         });
+    }
+
+    public void updateRequestList(int number, TripRequest request) {
+        if (number >= 0 && number < tripRequests.size()) {
+            this.tripRequests.set(number, request);
+            adapter.notifyDataSetChanged();
+        }
     }
 }

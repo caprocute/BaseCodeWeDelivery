@@ -47,7 +47,8 @@ public class LauncherActivity extends AppCompatActivity {
         mCcp.registerPhoneNumberTextView(mEdtPhoneNumber);
         mCounDownHandler = new Handler();
         mCounDownRun = new DemNguocRunnable();
-        getscreensize();
+        mStart.setVisibility(View.VISIBLE);
+        mFrame.setVisibility(View.GONE);
         showDemNguoc();
         mAuth = FirebaseAuth.getInstance();
 /*
@@ -120,7 +121,7 @@ public class LauncherActivity extends AppCompatActivity {
         if (mTime == 0) {
             FirebaseUser currentUser = mAuth.getCurrentUser();
             if (currentUser != null) {
-                Intent intent = new Intent(LauncherActivity.this, MainActivity.class);
+                Intent intent = new Intent(LauncherActivity.this, UserTypeActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 finish();
                 startActivity(intent);

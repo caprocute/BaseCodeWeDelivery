@@ -1,5 +1,6 @@
 package com.example.hoang.myapplication.UI;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
@@ -14,10 +15,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.example.hoang.myapplication.Fragment.MapFragment;
+import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
+import com.example.hoang.myapplication.Fragment.UserMap;
 import com.example.hoang.myapplication.Model.Account;
+import com.example.hoang.myapplication.Model.TripRequest;
 import com.example.hoang.myapplication.R;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
@@ -63,8 +67,8 @@ public class MainActivity extends AppCompatActivity
         profileImage = (CircleImageView) header.findViewById(R.id.profile_image);
         txtHeaderName = (TextView) header.findViewById(R.id.txtheader_name);
 
-        fragment = new MapFragment();
-        fragmentManager.beginTransaction().replace(R.id.main_container, fragment).commit();
+        fragment = new UserMap();
+        fragmentManager.beginTransaction().replace(R.id.main_container, fragment, "MAP_FRAGMENT").commit();
 
         final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_ACCOUNT);
         mAuth = FirebaseAuth.getInstance();
@@ -169,13 +173,38 @@ public class MainActivity extends AppCompatActivity
             case R.id.profile_image:
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                 drawer.closeDrawer(GravityCompat.START);
-                Intent intent = new Intent(MainActivity.this,PersonalActivity.class);
+                Intent intent = new Intent(MainActivity.this, PersonalActivity.class);
                 startActivity(intent);
                 break;
             case R.id.test_driver:
                 break;
             case R.id.btnNearDriver:
                 break;
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RecyclerListAdapter.REQUEST_CODE_EXAMPLE) {
+
+            // resultCode được set bởi DetailActivity
+            // RESULT_OK chỉ ra rằng kết quả này đã thành công
+            if (resultCode == Activity.RESULT_OK) {
+                // Nhận dữ liệu từ Intent trả về
+                final TripRequest result = (TripRequest) data.getParcelableExtra(RequestActivity.EXTRA_DATA);
+                final int number = data.getIntExtra(RequestActivity.EXTRA_NUMBER, -1);
+                if (number != -1) {
+                    UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
+                    if (myFragment != null && myFragment.isVisible()) {
+                        myFragment.updateRequestList(number, result);
+                    }
+                }
+                // Sử dụng kết quả result bằng cách hiện Toast
+                Toast.makeText(this, "Result: " + result.getDestinationName(), Toast.LENGTH_LONG).show();
+            } else {
+                // DetailActivity không thành công, không có data trả về.
+            }
         }
     }
 }

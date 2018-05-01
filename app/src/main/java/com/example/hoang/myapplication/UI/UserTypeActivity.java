@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.example.hoang.myapplication.Fragment.DriverMap;
 import com.example.hoang.myapplication.Model.Account;
 import com.example.hoang.myapplication.R;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
@@ -87,10 +88,12 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
             case R.id.loginCustomer:
                 Intent intent = new Intent(UserTypeActivity.this, MainActivity.class);
                 intent.putExtra("logintype", 0);
+                finish();
                 startActivity(intent);
             case R.id.loginDriver:
-                intent = new Intent(UserTypeActivity.this, MainActivity.class);
+                intent = new Intent(UserTypeActivity.this, DriverMap.class);
                 intent.putExtra("logintype", 1);
+                finish();
                 startActivity(intent);
                 break;
         }
