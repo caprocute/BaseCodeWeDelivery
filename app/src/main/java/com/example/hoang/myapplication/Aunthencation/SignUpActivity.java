@@ -12,8 +12,10 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.hoang.myapplication.UI.MainActivity;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.Test.DriverLoginActivity;
+import com.example.hoang.myapplication.UI.MainActivity;
+import com.example.hoang.myapplication.UI.UserTypeActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -52,6 +54,7 @@ public class SignUpActivity extends AppCompatActivity {
         btnSPN = (ImageView) findViewById(R.id.btnSubmitPhoneNumber);
         btnFace = (Button) findViewById(R.id.btnLoginFacebook);
         btnGG = (Button) findViewById(R.id.btnLoginGoogle);
+        btnFace = (Button) findViewById(R.id.btnLoginFacebook);
         btnBack = (ImageButton) findViewById(R.id.button_prvious);
 
         mCcp = (CountryCodePicker) findViewById(R.id.ccp);
@@ -83,6 +86,15 @@ public class SignUpActivity extends AppCompatActivity {
             public void onClick(View v) {
                 signInGoogle();
 
+            }
+        });
+        btnFace.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(SignUpActivity.this, DriverLoginActivity.class);
+                intent.putExtra("logintype", 1);
+                finish();
+                startActivity(intent);
             }
         });
         btnBack.setOnClickListener(new View.OnClickListener() {

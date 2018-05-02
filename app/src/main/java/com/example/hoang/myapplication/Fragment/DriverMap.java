@@ -13,6 +13,9 @@ import android.support.v4.app.FragmentActivity;
 import com.example.hoang.myapplication.R;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
+import com.firebase.geofire.LocationCallback;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -22,9 +25,15 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DriverMap extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks,
         OnMapReadyCallback, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener {
@@ -121,4 +130,58 @@ public class DriverMap extends FragmentActivity implements GoogleApiClient.Conne
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
+
+    public void getDriver() {
+        final List<Marker> markers = new ArrayList<>();
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference ref = root.child(CHILD_DRIVER_POSTION_AVAIABLE_CAR);
+        GeoFire geoFire = new GeoFire(ref);
+        GeoQuery geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude()), 1000);
+        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+            @Override
+            public void onKeyEntered(String key, GeoLocation location) {
+                for (Marker marker : markers) {
+                    if (marker.getTag().equals(key)) return;
+                    ;
+                }
+
+                LatLng driverLocation = new LatLng(location.latitude, location.longitude);
+                Marker driverMarker = mMap.addMarker(new MarkerOptions().position(driverLocation));
+                driverMarker.setTag(key);
+                markers.add(driverMarker);
+            }
+
+            @Override
+            public void onKeyExited(String key) {
+                for (Marker marker : markers) {
+                    if (marker.getTag().equals(key)) {
+                        marker.remove();
+                        markers.remove(marker);
+                        return;
+                    }
+                }
+            }
+
+            @Override
+            public void onKeyMoved(String key, GeoLocation location) {
+                for (Marker marker : markers) {
+                    if (marker.getTag().equals(key)) {
+                     marker.setPosition(new LatLng(location.latitude,location.longitude));
+                     return;
+                    }
+                }
+            }
+
+            @Override
+            public void onGeoQueryReady() {
+
+            }
+
+            @Override
+            public void onGeoQueryError(DatabaseError error) {
+
+            }
+        });
+    }
+
 }

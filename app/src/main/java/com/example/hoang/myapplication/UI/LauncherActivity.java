@@ -128,6 +128,7 @@ public class LauncherActivity extends AppCompatActivity {
             } else {
                 mlayout.setVisibility(View.VISIBLE);
                 mStart.setVisibility(View.GONE);
+                mFrame.setVisibility(View.VISIBLE);
             }
         }
         mCounDownHandler.postDelayed(mCounDownRun, 1000);

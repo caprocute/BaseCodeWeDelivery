@@ -11,6 +11,9 @@ import com.bumptech.glide.Glide;
 import com.example.hoang.myapplication.Fragment.DriverMap;
 import com.example.hoang.myapplication.Model.Account;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.Test.CustomerMapActivity;
+import com.example.hoang.myapplication.Test.DriverLoginActivity;
+import com.example.hoang.myapplication.Test.DriverMapActivity;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -90,8 +93,10 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
                 intent.putExtra("logintype", 0);
                 finish();
                 startActivity(intent);
+                break;
             case R.id.loginDriver:
-                intent = new Intent(UserTypeActivity.this, DriverMap.class);
+                FirebaseAuth.getInstance().signOut();
+                intent = new Intent(UserTypeActivity.this, DriverLoginActivity.class);
                 intent.putExtra("logintype", 1);
                 finish();
                 startActivity(intent);
