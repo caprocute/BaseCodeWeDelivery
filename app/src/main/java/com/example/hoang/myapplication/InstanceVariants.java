@@ -9,4 +9,6 @@ public class InstanceVariants {
     public static final String CHILD_USER = "USER";
     public static final String CHILD_USER_DRIVER = "DRIVER";
     public static final String CHILD_USER_CUSTOMER = "CUSTOMER_REQUEST";
+    public static final String CHILD_TRIPS = "TRIPS";
+    public static final String CHILD_REQUEST = "REQUEST";
 }

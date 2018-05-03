@@ -20,7 +20,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.hoang.myapplication.Model.TripRequest;
+import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.R;
 import com.example.hoang.myapplication.UI.MainActivity;
 import com.example.hoang.myapplication.UI.RequestActivity;
@@ -32,11 +32,11 @@ import java.util.List;
 public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapter.ItemViewHolder>
         implements ItemTouchHelperAdapter {
     public static final int REQUEST_CODE_EXAMPLE = 0x9345;
-    private List<TripRequest> mItems = new ArrayList<>();
+    private List<Request> mItems = new ArrayList<>();
     private Context context;
     private final OnStartDragListener mDragStartListener;
 
-    public RecyclerListAdapter(Context context, OnStartDragListener dragStartListener, List<TripRequest> mItems) {
+    public RecyclerListAdapter(Context context, OnStartDragListener dragStartListener, List<Request> mItems) {
         mDragStartListener = dragStartListener;
         this.mItems = mItems;
         this.context = context;
@@ -87,7 +87,7 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, RequestActivity.class);
-                TripRequest request = mItems.get(position);
+                Request request = mItems.get(position);
                 intent.putExtra("request", request);
                 intent.putExtra("number", position);
                 ((MainActivity) context).startActivityForResult(intent, REQUEST_CODE_EXAMPLE);
@@ -113,7 +113,7 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
         }
     }
 
-    private void showDailog(final TripRequest request, final int postion) {
+    private void showDailog(final Request request, final int postion) {
         final Dialog dialog = new Dialog(context);
         Rect displayRectangle = new Rect();
         Window window = ((MainActivity) context).getWindow();

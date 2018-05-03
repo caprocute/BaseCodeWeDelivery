@@ -9,8 +9,8 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -27,7 +27,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.RadioButton;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,7 +38,8 @@ import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
 import com.example.hoang.myapplication.Adapter.SimpleItemTouchHelperCallback;
 import com.example.hoang.myapplication.InstanceVariants;
 import com.example.hoang.myapplication.Model.DriverPostion;
-import com.example.hoang.myapplication.Model.TripRequest;
+import com.example.hoang.myapplication.Model.Request;
+import com.example.hoang.myapplication.Model.Trip;
 import com.example.hoang.myapplication.R;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -114,10 +117,10 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     private ItemTouchHelper mItemTouchHelper;
     private TextView txtAdd, txtRemove, txtOptimze;
     private RecyclerListAdapter adapter;
-    private List<TripRequest> tripRequests = new ArrayList<>();
+    private List<Request> tripRequests = new ArrayList<>();
     private CoordinatorLayout optionUI;
     private ImageView imgBikeMode, imgCarMode;
-    private FloatingActionButton btnRequest;
+    private FloatingActionButton btnRequest, btnCall, btnSMS;
     private Boolean requestTrip;
     // true is bike mode, false is car mode
     private boolean vehicleMode = true;
@@ -128,6 +131,13 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     private int radius = 1;
     private Boolean driverFound = false;
     private String driverFoundID;
+    private String currentTripID;
+    private ConstraintLayout groupFindDriver, groupDriverInfor;
+    private LinearLayout groupListRequest;
+    private ImageView imgDriver;
+    private TextView txtDriverName, txtVehicleDec, txtStatus;
+    private RatingBar ratingDriver;
+    private ProgressBar progressBar;
 
     @Override
     public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
@@ -136,7 +146,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     private void initDestinationRecycle() {
 
-        TripRequest request = new TripRequest("1", "12391209310", null, null, null, null, 0, null);
+        Request request = new Request("1", "12391209310", null, null, null, null, 0, null);
         tripRequests.add(request);
         tripRequests.add(request);
 
@@ -186,8 +196,21 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         initDestinationRecycle();
+
         btnRequest = (FloatingActionButton) getView().findViewById(R.id.btn_request);
+        btnCall = (FloatingActionButton) getView().findViewById(R.id.btnCall);
+        btnSMS = (FloatingActionButton) getView().findViewById(R.id.btnSMS);
+        txtDriverName = (TextView) getView().findViewById(R.id.txtDriverName);
+        txtVehicleDec = (TextView) getView().findViewById(R.id.txtVehiceDec);
+        txtStatus = (TextView) getView().findViewById(R.id.txtStatus);
+        ratingDriver = (RatingBar) getView().findViewById(R.id.ratingBarDriver);
+        groupDriverInfor = (ConstraintLayout) getView().findViewById(R.id.groupDriverInfor);
+        groupFindDriver = (ConstraintLayout) getView().findViewById(R.id.groupFindDriver);
+        groupListRequest = (LinearLayout) getView().findViewById(R.id.groupListRequest);
+        progressBar = (ProgressBar) getView().findViewById(R.id.progressLoading);
         btnRequest.setOnClickListener(this);
+        btnCall.setOnClickListener(this);
+        btnSMS.setOnClickListener(this);
     }
 
     @Override
@@ -521,9 +544,6 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             case R.id.btnCurrentPlace:
                 getDeviceLocation();
                 break;
-            case R.id.test_driver:
-                setFakeDriver();
-                break;
             case R.id.btnNearDriver:
                 getNearestDriver();
                 break;
@@ -533,7 +553,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 break;
             case R.id.txtAdd:
                 if (tripRequests.size() < 5) {
-                    TripRequest request = new TripRequest("6", "12391209310", null, null, null, null, 0, null);
+                    Request request = new Request("6", "12391209310", null, null, null, null, 0, null);
                     tripRequests.add(request);
                     adapter.notifyDataSetChanged();
                 } else
@@ -555,12 +575,13 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 setVehicleMode(false);
                 break;
             case R.id.btn_request:
-                requestTrip();
+                if (!requestTrip())
+                    Toast.makeText(getActivity(), "Vui lòng cung cấp đầy đủ thông tin", Toast.LENGTH_SHORT).show();
                 break;
         }
     }
 
-    private void requestTrip() {
+    private boolean requestTrip() {
         if (tripRequests != null) {
             if (checkListRequest()) {
 
@@ -575,9 +596,27 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
                 pickupLocation = new LatLng(tripRequests.get(0).getDestination().latitude, tripRequests.get(0).getDestination().longitude);
                 pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
-
+                putRequest();
                 getClosestDriver();
-            }
+            } else return false;
+        } else return false;
+        return true;
+    }
+
+    private void putRequest() {
+        DatabaseReference rootTrip = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_TRIPS);
+        DatabaseReference rootRequest = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST);
+        final Trip trip = new Trip();
+        currentTripID = rootTrip.push().getKey();
+        trip.setId(currentTripID);
+        trip.setCustomerid(FirebaseAuth.getInstance().getCurrentUser().getUid());
+        rootTrip.child(currentTripID).setValue(trip);
+
+        for (int i = 0; i < tripRequests.size(); i++) {
+            tripRequests.get(i).setTripID(currentTripID);
+            String requestId = rootRequest.push().getKey();
+            tripRequests.get(i).setId(requestId);
+            rootRequest.child(requestId).setValue(tripRequests.get(i));
         }
     }
 
@@ -590,7 +629,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         } else {
             driverLocation = rootLocation.child(InstanceVariants.CHILD_CAR_POSTION);
         }
-
+        setFindDriverUI(2);
 
         GeoFire geoFire = new GeoFire(driverLocation);
         geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
@@ -617,19 +656,24 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                                 driverFound = true;
                                 driverFoundID = dataSnapshot.getKey();
 
-                                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_USER).child(InstanceVariants.CHILD_USER_DRIVER).child(driverFoundID).child("customerRequest");
+                                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().
+                                        child(InstanceVariants.CHILD_USER).
+                                        child(InstanceVariants.CHILD_USER_DRIVER).
+                                        child(driverFoundID).
+                                        child("customerRequest");
                                 String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                                driverRef.setValue(currentTripID);
  /*                               HashMap map = new HashMap();
                                 map.put("customerRideId", customerId);
                                 map.put("destination", destination);
                                 map.put("destinationLat", destinationLatLng.latitude);
                                 map.put("destinationLng", destinationLatLng.longitude);*/
-                                driverRef.updateChildren(tripRequests);
+                         /*       driverRef.updateChildren(tripRequests);
 
                                 getDriverLocation();
                                 getDriverInfo();
                                 getHasRideEnded();
-                                mRequest.setText("Looking for Driver Location....");
+                                mRequest.setText("Looking for Driver Location....");*/
 
                             }
                         }
@@ -666,10 +710,51 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         });
     }
 
+    private void setFindDriverUI(int check) {
+        switch (check) {
+            case 0:
+                groupListRequest.setVisibility(View.VISIBLE);
+                groupFindDriver.setVisibility(View.GONE);
+                groupDriverInfor.setVisibility(View.GONE);
+                btnSMS.setVisibility(View.GONE);
+                btnCall.setVisibility(View.GONE);
+                progressBar.setVisibility(View.GONE);
+                txtAdd.setVisibility(View.VISIBLE);
+                txtRemove.setVisibility(View.VISIBLE);
+                txtOptimze.setVisibility(View.VISIBLE);
+                txtStatus.setVisibility(View.GONE);
+                break;
+            case 1:
+                groupListRequest.setVisibility(View.GONE);
+                groupFindDriver.setVisibility(View.VISIBLE);
+                groupDriverInfor.setVisibility(View.GONE);
+                btnSMS.setVisibility(View.GONE);
+                btnCall.setVisibility(View.GONE);
+                progressBar.setVisibility(View.VISIBLE);
+                txtAdd.setVisibility(View.GONE);
+                txtRemove.setVisibility(View.GONE);
+                txtOptimze.setVisibility(View.GONE);
+                txtStatus.setVisibility(View.VISIBLE);
+                break;
+            case 2:
+                groupListRequest.setVisibility(View.GONE);
+                groupFindDriver.setVisibility(View.VISIBLE);
+                groupDriverInfor.setVisibility(View.VISIBLE);
+                btnSMS.setVisibility(View.VISIBLE);
+                btnCall.setVisibility(View.VISIBLE);
+                progressBar.setVisibility(View.GONE);
+                txtAdd.setVisibility(View.GONE);
+                txtRemove.setVisibility(View.GONE);
+                txtOptimze.setVisibility(View.GONE);
+                txtStatus.setVisibility(View.VISIBLE);
+                break;
+        }
+    }
+
     private boolean checkListRequest() {
         if (tripRequests == null) return false;
         if (!tripRequests.get(0).isStartPointAndItDone()) return false;
-        for (int i = 1; i < tripRequests.size() - 1; i++) {
+        for (int i = 1; i < tripRequests.size(); i++) {
             if (!tripRequests.get(i).isRequestDone()) return false;
         }
         return true;
@@ -685,133 +770,10 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             imgBikeMode.setImageDrawable(getActivity().getDrawable(R.drawable.ic_motor_mode_gray));
             imgCarMode.setImageDrawable(getActivity().getDrawable(R.drawable.ic_car_mode));
         }
-        setFakeDriver();
     }
 
     ArrayList<LatLng> latLngsThread = new ArrayList<>();
 
-    private void createRandomDriver(double minx, double miny, double maxx, double maxy) {
-        ArrayList<LatLng> latLngs = new ArrayList<>();
-        final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_DRIVER_POSTION);
-        final DatabaseReference rootCar = root.child(InstanceVariants.CHILD_CAR_POSTION);
-        rootCar.removeValue();
-        Random random = new Random();
-        mMap.clear();
-        for (int i = 0; i < 10; i++) {
-            double xcode = minx + (maxx - minx) * random.nextDouble();
-            double ycode = miny + (maxy - miny) * random.nextDouble();
-            LatLng latLng = new LatLng(ycode, xcode);
-            addCarMarker(latLng, null);
-            latLngs.add(latLng);
-        }
-        DriverPostion driverPostion1 = new DriverPostion();
-        DriverPostion driverPostion2 = new DriverPostion();
-        DriverPostion driverPostion3 = new DriverPostion();
-        DriverPostion driverPostion4 = new DriverPostion();
-        DriverPostion driverPostion5 = new DriverPostion();
-
-        driverPostion1.setDriverID("DR1" + true);
-        driverPostion2.setDriverID("DR2" + true);
-        driverPostion3.setDriverID("DR3" + false);
-        driverPostion4.setDriverID("DR4" + false);
-        driverPostion5.setDriverID("DR5" + false);
-
-        driverPostion1.setLangtitude(17.449903);
-        driverPostion1.setLongitude(106.603251);
-        driverPostion1.setCoordi(driverPostion1.getLangtitude() + "|" + driverPostion1.getLongitude());
-        driverPostion1.setBearing(0);
-
-        driverPostion2.setLangtitude(17.444294);
-        driverPostion2.setLongitude(106.598487);
-        driverPostion2.setCoordi(driverPostion2.getLangtitude() + "|" + driverPostion2.getLongitude());
-        driverPostion2.setBearing(0);
-
-        driverPostion3.setLangtitude(17.535421);
-        driverPostion3.setLongitude(106.564076);
-        driverPostion3.setCoordi(driverPostion3.getLangtitude() + "|" + driverPostion3.getLongitude());
-        driverPostion3.setBearing(0);
-
-        driverPostion4.setLangtitude(17.541407);
-        driverPostion4.setLongitude(106.615934);
-        driverPostion4.setCoordi(driverPostion4.getLangtitude() + "|" + driverPostion4.getLongitude());
-        driverPostion4.setBearing(0);
-
-        driverPostion5.setLangtitude(17.370698);
-        driverPostion5.setLongitude(106.748358);
-        driverPostion5.setCoordi(driverPostion5.getLangtitude() + "|" + driverPostion5.getLongitude());
-        driverPostion5.setBearing(0);
-
-        rootCar.child(driverPostion1.getDriverID()).setValue(driverPostion1);
-        rootCar.child(driverPostion2.getDriverID()).setValue(driverPostion2);
-        rootCar.child(driverPostion3.getDriverID()).setValue(driverPostion3);
-        rootCar.child(driverPostion4.getDriverID()).setValue(driverPostion4);
-        rootCar.child(driverPostion5.getDriverID()).setValue(driverPostion5);
-
-        addCarMarker(new LatLng(driverPostion1.getLangtitude(), driverPostion1.getLongitude()), null);
-        addCarMarker(new LatLng(driverPostion2.getLangtitude(), driverPostion2.getLongitude()), null);
-        addCarMarker(new LatLng(driverPostion3.getLangtitude(), driverPostion3.getLongitude()), null);
-        addCarMarker(new LatLng(driverPostion4.getLangtitude(), driverPostion4.getLongitude()), null);
-        addCarMarker(new LatLng(driverPostion5.getLangtitude(), driverPostion5.getLongitude()), null);
-        // put driver to database
-        for (int i = 0; i < 10; i++) {
-
-            float xcode = 0 + (360 - 0) * random.nextFloat();
-
-            DriverPostion driverPostion = new DriverPostion();
-
-            driverPostion.setDriverID("DR" + i);
-            driverPostion.setLangtitude(latLngs.get(i).latitude);
-            driverPostion.setLongitude(latLngs.get(i).longitude);
-            driverPostion.setCoordi(driverPostion.getLangtitude() + "|" + driverPostion.getLongitude());
-            driverPostion.setBearing(xcode);
-            driverPostion.setDriverType(1);
-            driverPostion.setStatus(0);
-            rootCar.child(driverPostion.getDriverID()).setValue(driverPostion);
-        }
-        latLngsThread = latLngs;
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                for (int j = 0; j < 60; j++) {
-                    SystemClock.sleep(1000);
-                    Log.d("hieuhk", "run: " + j);
-                    for (int i = 0; i < 10; i++) {
-
-                        Random random = new Random();
-                        latLngsThread.set(i, new LatLng(latLngsThread.get(i).latitude + 0.01, latLngsThread.get(i).longitude + 0.01));
-                        float xcode = 0 + (360 - 0) * random.nextFloat();
-                        //nghỉ 200 mili second
-
-                        DriverPostion driverPostion = new DriverPostion();
-                        driverPostion.setDriverID("DR" + i);
-                        driverPostion.setLangtitude(latLngsThread.get(i).latitude);
-                        driverPostion.setLongitude(latLngsThread.get(i).longitude);
-                        driverPostion.setCoordi(driverPostion.getLangtitude() + "|" + driverPostion.getLongitude());
-                        driverPostion.setDriverType(1);
-                        driverPostion.setStatus(0);
-                        rootCar.child(driverPostion.getDriverID()).setValue(driverPostion);
-                    }
-                }
-            }
-        });
-        //start thread
-        thread.start();
-    }
-
-    private void setFakeDriver() {
-
-        LatLng lineTop = calculatorMaxdistance(0.0);
-        LatLng lineLeft = calculatorMaxdistance(-90.0);
-        LatLng lineRight = calculatorMaxdistance(90.0);
-        LatLng lineBelow = calculatorMaxdistance(-180.0);
-
-        double maxX = lineRight.longitude;
-        double minX = lineLeft.longitude;
-        double maxY = lineTop.latitude;
-        double minY = lineBelow.latitude;
-
-        createRandomDriver(minX, minY, maxX, maxY);
-    }
 
     private LatLng calculatorMaxdistance(double bearing) {
         if (mLastKnownLocation == null) return null;
@@ -904,7 +866,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         });
     }
 
-    public void updateRequestList(int number, TripRequest request) {
+    public void updateRequestList(int number, Request request) {
         if (number >= 0 && number < tripRequests.size()) {
             this.tripRequests.set(number, request);
             adapter.notifyDataSetChanged();

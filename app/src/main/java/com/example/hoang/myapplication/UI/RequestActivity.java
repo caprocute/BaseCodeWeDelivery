@@ -20,7 +20,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.example.hoang.myapplication.Adapter.PlaceArrayAdapter;
-import com.example.hoang.myapplication.Model.TripRequest;
+import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -46,7 +46,7 @@ public class RequestActivity extends AppCompatActivity implements
     private PlaceArrayAdapter mPlaceArrayAdapter;
     private static final LatLngBounds BOUNDS_MOUNTAIN_VIEW = new LatLngBounds(
             new LatLng(8.888130, 104.844789), new LatLng(21.500409, 107.598679));
-    private TripRequest request;
+    private Request request;
     private int number;
 
     @Override
@@ -67,7 +67,7 @@ public class RequestActivity extends AppCompatActivity implements
                 BOUNDS_MOUNTAIN_VIEW, null);
         mAutocompleteTextView.setAdapter(mPlaceArrayAdapter);
         Intent intent = getIntent();
-        request = (TripRequest) intent.getParcelableExtra("request");
+        request = (Request) intent.getParcelableExtra("request");
         number = intent.getIntExtra("number", -1);
     }
 
@@ -113,7 +113,7 @@ public class RequestActivity extends AppCompatActivity implements
         }
     };
 
-    private void showDailog(final TripRequest request, final PlaceBuffer postion) {
+    private void showDailog(final Request request, final PlaceBuffer postion) {
         final Dialog dialog = new Dialog(this);
         Rect displayRectangle = new Rect();
         Window window = getWindow();

@@ -7,11 +7,11 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Date;
 
-public class TripRequest implements Parcelable {
+public class Request implements Parcelable {
     private String id;
     private String destinationName;
 
-    protected TripRequest(Parcel in) {
+    protected Request(Parcel in) {
         id = in.readString();
         destinationName = in.readString();
         tripID = in.readString();
@@ -22,15 +22,15 @@ public class TripRequest implements Parcelable {
         money = in.readFloat();
     }
 
-    public static final Creator<TripRequest> CREATOR = new Creator<TripRequest>() {
+    public static final Creator<Request> CREATOR = new Creator<Request>() {
         @Override
-        public TripRequest createFromParcel(Parcel in) {
-            return new TripRequest(in);
+        public Request createFromParcel(Parcel in) {
+            return new Request(in);
         }
 
         @Override
-        public TripRequest[] newArray(int size) {
-            return new TripRequest[size];
+        public Request[] newArray(int size) {
+            return new Request[size];
         }
     };
 
@@ -110,13 +110,13 @@ public class TripRequest implements Parcelable {
         this.timeDrop = timeDrop;
     }
 
-    public TripRequest(String id,
-                       String tripID,
-                       String receiverName,
-                       String receiverNumber, LatLng destination,
-                       String note,
-                       float money,
-                       Date timeDrop) {
+    public Request(String id,
+                   String tripID,
+                   String receiverName,
+                   String receiverNumber, LatLng destination,
+                   String note,
+                   float money,
+                   Date timeDrop) {
         this.id = id;
         this.tripID = tripID;
         this.receiverName = receiverName;
@@ -157,7 +157,7 @@ public class TripRequest implements Parcelable {
     }
 
     public boolean isStartPointAndItDone() {
-        if (this.receiverName == null || this.receiverName.isEmpty()) return false;
+        if (this.destinationName == null || this.destinationName.isEmpty()) return false;
         if (this.destination== null) return false;
         return true;
     }

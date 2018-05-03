@@ -21,7 +21,7 @@ import com.bumptech.glide.Glide;
 import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
 import com.example.hoang.myapplication.Fragment.UserMap;
 import com.example.hoang.myapplication.Model.Account;
-import com.example.hoang.myapplication.Model.TripRequest;
+import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.R;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
@@ -192,7 +192,7 @@ public class MainActivity extends AppCompatActivity
             // RESULT_OK chỉ ra rằng kết quả này đã thành công
             if (resultCode == Activity.RESULT_OK) {
                 // Nhận dữ liệu từ Intent trả về
-                final TripRequest result = (TripRequest) data.getParcelableExtra(RequestActivity.EXTRA_DATA);
+                final Request result = (Request) data.getParcelableExtra(RequestActivity.EXTRA_DATA);
                 final int number = data.getIntExtra(RequestActivity.EXTRA_NUMBER, -1);
                 if (number != -1) {
                     UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
