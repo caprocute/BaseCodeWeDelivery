@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -26,15 +27,21 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.hoang.myapplication.Adapter.OnStartDragListener;
 import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
 import com.example.hoang.myapplication.Adapter.SimpleItemTouchHelperCallback;
+import com.example.hoang.myapplication.InstanceVariants;
 import com.example.hoang.myapplication.Model.DriverPostion;
 import com.example.hoang.myapplication.Model.TripRequest;
 import com.example.hoang.myapplication.R;
+import com.firebase.geofire.GeoFire;
+import com.firebase.geofire.GeoLocation;
+import com.firebase.geofire.GeoQuery;
+import com.firebase.geofire.GeoQueryEventListener;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.GeoDataClient;
@@ -53,6 +60,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -70,9 +78,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     private String TAG = "UserMap";
     private CameraPosition mCameraPosition;
     private GoogleMap mMap;
-    private final String CHILD_DRIVER_POSTION = "DRIVER_POSTION";
-    private final String CHILD_CAR_POSTION = "CAR_POSTION";
-    private final String CHILD_MOTOR_POSTION = "MOTOR_POSTION";
+
     // The entry points to the Places API.
     private GeoDataClient mGeoDataClient;
     private PlaceDetectionClient mPlaceDetectionClient;
@@ -82,8 +88,6 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     private ImageButton btnMenu;
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient mFusedLocationProviderClient;
-
-    // A default location (Sydney, Australia) and default zoom to use when location permission is
     // not granted.
     private final LatLng mDefaultLocation = new LatLng(-33.8523341, 151.2106085);
     private static final int DEFAULT_ZOOM = 13;
@@ -113,8 +117,17 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     private List<TripRequest> tripRequests = new ArrayList<>();
     private CoordinatorLayout optionUI;
     private ImageView imgBikeMode, imgCarMode;
+    private FloatingActionButton btnRequest;
+    private Boolean requestTrip;
     // true is bike mode, false is car mode
     private boolean vehicleMode = true;
+    // variants for request a trip
+    private LatLng pickupLocation;
+    private Marker pickupMarker;
+    private GeoQuery geoQuery;
+    private int radius = 1;
+    private Boolean driverFound = false;
+    private String driverFoundID;
 
     @Override
     public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
@@ -138,7 +151,6 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         txtAdd.setOnClickListener(this);
         txtRemove.setOnClickListener(this);
         txtOptimze.setOnClickListener(this);
-//        recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
@@ -174,6 +186,8 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         initDestinationRecycle();
+        btnRequest = (FloatingActionButton) getView().findViewById(R.id.btn_request);
+        btnRequest.setOnClickListener(this);
     }
 
     @Override
@@ -540,7 +554,125 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             case R.id.img_car_mode:
                 setVehicleMode(false);
                 break;
+            case R.id.btn_request:
+                requestTrip();
+                break;
         }
+    }
+
+    private void requestTrip() {
+        if (tripRequests != null) {
+            if (checkListRequest()) {
+
+                requestTrip = true;
+
+                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_CUSTOMER_REQUEST);
+
+                GeoFire geoFire = new GeoFire(ref);
+                geoFire.setLocation(userId, new GeoLocation(tripRequests.get(0).getDestination().latitude, tripRequests.get(0).getDestination().longitude));
+
+                pickupLocation = new LatLng(tripRequests.get(0).getDestination().latitude, tripRequests.get(0).getDestination().longitude);
+                pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
+
+                getClosestDriver();
+            }
+        }
+    }
+
+    private void getClosestDriver() {
+        DatabaseReference rootLocation = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_DRIVER_AVAIABLE);
+        DatabaseReference driverLocation;
+
+        if (vehicleMode) {
+            driverLocation = rootLocation.child(InstanceVariants.CHILD_MOTOR_POSTION);
+        } else {
+            driverLocation = rootLocation.child(InstanceVariants.CHILD_CAR_POSTION);
+        }
+
+
+        GeoFire geoFire = new GeoFire(driverLocation);
+        geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
+        geoQuery.removeAllListeners();
+
+        geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+            @Override
+            public void onKeyEntered(String key, GeoLocation location) {
+                if (!driverFound && requestTrip) {
+
+                    DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(key);
+
+                    mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+
+                                Map<String, Object> driverMap = (Map<String, Object>) dataSnapshot.getValue();
+
+                                if (driverFound) {
+                                    return;
+                                }
+
+                                driverFound = true;
+                                driverFoundID = dataSnapshot.getKey();
+
+                                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_USER).child(InstanceVariants.CHILD_USER_DRIVER).child(driverFoundID).child("customerRequest");
+                                String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+ /*                               HashMap map = new HashMap();
+                                map.put("customerRideId", customerId);
+                                map.put("destination", destination);
+                                map.put("destinationLat", destinationLatLng.latitude);
+                                map.put("destinationLng", destinationLatLng.longitude);*/
+                                driverRef.updateChildren(tripRequests);
+
+                                getDriverLocation();
+                                getDriverInfo();
+                                getHasRideEnded();
+                                mRequest.setText("Looking for Driver Location....");
+
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onKeyExited(String key) {
+
+            }
+
+            @Override
+            public void onKeyMoved(String key, GeoLocation location) {
+
+            }
+
+            @Override
+            public void onGeoQueryReady() {
+                if (!driverFound) {
+                    radius++;
+                    getClosestDriver();
+                }
+            }
+
+            @Override
+            public void onGeoQueryError(DatabaseError error) {
+
+            }
+        });
+    }
+
+    private boolean checkListRequest() {
+        if (tripRequests == null) return false;
+        if (!tripRequests.get(0).isStartPointAndItDone()) return false;
+        for (int i = 1; i < tripRequests.size() - 1; i++) {
+            if (!tripRequests.get(i).isRequestDone()) return false;
+        }
+        return true;
     }
 
     private void setVehicleMode(Boolean mode) {
@@ -560,8 +692,8 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     private void createRandomDriver(double minx, double miny, double maxx, double maxy) {
         ArrayList<LatLng> latLngs = new ArrayList<>();
-        final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_DRIVER_POSTION);
-        final DatabaseReference rootCar = root.child(CHILD_CAR_POSTION);
+        final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_DRIVER_POSTION);
+        final DatabaseReference rootCar = root.child(InstanceVariants.CHILD_CAR_POSTION);
         rootCar.removeValue();
         Random random = new Random();
         mMap.clear();
@@ -721,8 +853,8 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     }
 
     private void getNearestDriver() {
-        final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_DRIVER_POSTION);
-        final DatabaseReference rootCar = root.child(CHILD_CAR_POSTION);
+        final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_DRIVER_POSTION);
+        final DatabaseReference rootCar = root.child(InstanceVariants.CHILD_CAR_POSTION);
         getDeviceLocation();
         LatLng lineTop = calculatorMaxdistance(0.0);
         LatLng lineLeft = calculatorMaxdistance(-90.0);

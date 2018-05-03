@@ -156,6 +156,12 @@ public class TripRequest implements Parcelable {
         return true;
     }
 
+    public boolean isStartPointAndItDone() {
+        if (this.receiverName == null || this.receiverName.isEmpty()) return false;
+        if (this.destination== null) return false;
+        return true;
+    }
+
     public boolean isRequestDone() {
         if (this.id == null || this.id.isEmpty()) return false;
         if (this.destinationName == null || this.destinationName.isEmpty()) return false;
