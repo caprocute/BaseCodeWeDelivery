@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -99,7 +100,8 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     // The geographical location where the device is currently located. That is, the last-known
     // location retrieved by the Fused Location Provider.
-    private Location mLastKnownLocation;
+    private Location mLastKnownLocation = new Location(LocationManager.GPS_PROVIDER);
+    ;
 
     // Keys for storing activity state.
     private static final String KEY_CAMERA_POSITION = "camera_position";
@@ -128,7 +130,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     private LatLng pickupLocation;
     private Marker pickupMarker;
     private GeoQuery geoQuery;
-    private int radius = 1;
+    private int radius = 5;
     private int maxRadius = 5;
     private Boolean driverFound = false;
     private String driverFoundID;
@@ -181,15 +183,19 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         if (savedInstanceState != null) {
             mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
+        } else {
+
+            mLastKnownLocation.setLatitude(mDefaultLocation.latitude);
+            mLastKnownLocation.setLongitude(mDefaultLocation.longitude);
         }
-        View rootView = inflater.inflate(R.layout.map, container, false);
+        View rootView = inflater.inflate(R.layout.customer_map, container, false);
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(getActivity(), null);
         // Construct a PlaceDetectionClient.
         mPlaceDetectionClient = Places.getPlaceDetectionClient(getActivity(), null);
         // Construct a FusedLocationProviderClient.
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(getActivity());
-        //initialize map
+        //initialize customer_map
         mapView = (MapView) rootView.findViewById(R.id.mapView);
         btnMenu = (ImageButton) rootView.findViewById(R.id.btn_menu);
         lisDestination = (RecyclerView) rootView.findViewById(R.id.listDestionation);
@@ -301,10 +307,10 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         // Prompt the user for permission.
         getLocationPermission();
 
-        // Turn on the My Location layer and the related control on the map.
+        // Turn on the My Location layer and the related control on the customer_map.
         updateLocationUI();
 
-        // Get the current location of the device and set the position of the map.
+        // Get the current location of the device and set the position of the customer_map.
         getDeviceLocation();
 
 
@@ -322,7 +328,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                     @Override
                     public void onComplete(@NonNull Task<Location> task) {
                         if (task.isSuccessful()) {
-                            // Set the map's camera position to the current location of the device.
+                            // Set the customer_map's camera position to the current location of the device.
                             mLastKnownLocation = task.getResult();
                             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
                                     new LatLng(mLastKnownLocation.getLatitude(),
@@ -385,7 +391,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     /**
      * Prompts the user to select the current place from a list of likely places, and shows the
-     * current place on the map - provided the user has granted location permission.
+     * current place on the customer_map - provided the user has granted location permission.
      */
     private void showCurrentPlace() {
         if (mMap == null) {
@@ -486,7 +492,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                         .snippet(markerSnippet))
                         .setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
 
-                // Position the map's camera at the location of the marker.
+                // Position the customer_map's camera at the location of the marker.
                 mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
                         DEFAULT_ZOOM));
             }
@@ -500,7 +506,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     }
 
     /**
-     * Updates the map's UI settings based on whether the user has granted location permission.
+     * Updates the customer_map's UI settings based on whether the user has granted location permission.
      */
     private void updateLocationUI() {
         if (mMap == null) {
@@ -646,10 +652,6 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
                 String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                DatabaseReference ref = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_CUSTOMER_REQUEST);
-
-                GeoFire geoFire = new GeoFire(ref);
-                geoFire.setLocation(userId, new GeoLocation(tripRequests.get(0).getDestination().latitude, tripRequests.get(0).getDestination().longitude));
 
                 pickupLocation = new LatLng(tripRequests.get(0).getDestination().latitude, tripRequests.get(0).getDestination().longitude);
                 pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
@@ -668,6 +670,11 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         trip.setId(currentTripID);
         trip.setCustomerid(FirebaseAuth.getInstance().getCurrentUser().getUid());
         rootTrip.child(currentTripID).setValue(trip);
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_CUSTOMER_REQUEST);
+
+        GeoFire geoFire = new GeoFire(ref);
+        geoFire.setLocation(currentTripID, new GeoLocation(tripRequests.get(0).getDestination().latitude, tripRequests.get(0).getDestination().longitude));
+
 
         for (int i = 0; i < tripRequests.size(); i++) {
             tripRequests.get(i).setTripID(currentTripID);
@@ -679,14 +686,14 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     private void getClosestDriver() {
         DatabaseReference rootLocation = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_DRIVER_AVAIABLE);
-        DatabaseReference driverLocation;
+        final DatabaseReference driverLocation;
 
         if (vehicleMode) {
             driverLocation = rootLocation.child(InstanceVariants.CHILD_MOTOR_POSTION);
         } else {
             driverLocation = rootLocation.child(InstanceVariants.CHILD_CAR_POSTION);
         }
-        setFindDriverUI(2);
+        setFindDriverUI(1);
 
         GeoFire geoFire = new GeoFire(driverLocation);
         geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
@@ -695,10 +702,10 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
             @Override
             public void onKeyEntered(String key, GeoLocation location) {
-                if (!driverFound && requestTrip) {
+                if (!driverFound) {
 
                     DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance()
-                            .getReference().child(InstanceVariants.CHILD_WORKING).child(InstanceVariants.CHILD_WORKING_DRIVER).child(key);
+                            .getReference().child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).child(key);
 
                     mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -713,13 +720,8 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
                                 driverFound = true;
                                 driverFoundID = dataSnapshot.getKey();
-
-                                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().
-                                        child(InstanceVariants.CHILD_WORKING).
-                                        child(InstanceVariants.CHILD_WORKING_DRIVER).
-                                        child(driverFoundID).
-                                        child("customerRequest");
-                                String customerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference()
+                                        .child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).child(driverFoundID).child("customerRequest");
                                 driverRef.setValue(currentTripID);
 
                                 getDriverLocation();
@@ -752,12 +754,13 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             @Override
             public void onGeoQueryReady() {
                 if (!driverFound) {
-                    if (radius <= 5) {
+                    if (radius <= 100) {
                         radius++;
                         getClosestDriver();
                     } else {
                         //Todo: UPDATE STATUS NOT FOUND DRIVER
                         setFindDriverUI(0);
+                        radius = 5;
                         Toast.makeText(getActivity(), "Không thể tìm thấy tài xế phù hợp với bạn", Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -828,7 +831,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     }
 
     private void getDriverInfo() {
-        setFindDriverUI(1);
+        setFindDriverUI(2);
         DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference()
                 .child(InstanceVariants.CHILD_ACCOUNT).child(InstanceVariants.CHILD_WORKING_DRIVER).child(driverFoundID);
         mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -997,7 +1000,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         } else {
             driverLocation = rootLocation.child(InstanceVariants.CHILD_CAR_POSTION);
         }
-        setFindDriverUI(2);
+        /*setFindDriverUI(2);*/
 
         GeoFire geoFire = new GeoFire(driverLocation);
         geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), 10);

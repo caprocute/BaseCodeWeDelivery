@@ -326,7 +326,7 @@ public class HistorySingleActivity extends AppCompatActivity implements OnMapRea
         }
 
         polylines = new ArrayList<>();
-        //add route(s) to the map.
+        //add route(s) to the customer_map.
         for (int i = 0; i <route.size(); i++) {
 
             //In case of more than 5 alternative routes

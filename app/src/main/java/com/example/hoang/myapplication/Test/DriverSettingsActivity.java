@@ -2,11 +2,8 @@ package com.example.hoang.myapplication.Test;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -16,23 +13,16 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
 import com.bumptech.glide.Glide;
+import com.example.hoang.myapplication.InstanceVariants;
+import com.example.hoang.myapplication.Model.Account;
+import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.R;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class DriverSettingsActivity extends AppCompatActivity {
 
@@ -52,8 +42,9 @@ public class DriverSettingsActivity extends AppCompatActivity {
     private String mService;
     private String mProfileImageUrl;
 
-    private Uri resultUri;
-
+    private String resultUri;
+    private Account account;
+    private Boolean isFirst = false;
     private RadioGroup mRadioGroup;
 
 
@@ -76,18 +67,9 @@ public class DriverSettingsActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
         userID = mAuth.getCurrentUser().getUid();
-        mDriverDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userID);
+        mDriverDatabase = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(userID);
 
         getUserInfo();
-
-        mProfileImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_PICK);
-                intent.setType("image/*");
-                startActivityForResult(intent, 1);
-            }
-        });
 
         mConfirm.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -104,43 +86,34 @@ public class DriverSettingsActivity extends AppCompatActivity {
             }
         });
     }
-    private void getUserInfo(){
+
+    private void getUserInfo() {
         mDriverDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists() && dataSnapshot.getChildrenCount()>0){
-                    Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
-                    if(map.get("name")!=null){
-                        mName = map.get("name").toString();
-                        mNameField.setText(mName);
+                if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+                    Driver driver = dataSnapshot.getValue(Driver.class);
+                    mNameField.setText(driver.getmName().toString());
+                    mPhoneField.setText(driver.getmPhone().toString());
+                    mCarField.setText(driver.getmCar().toString());
+                    mService = driver.getmService();
+                    resultUri=driver.getmProfileImageUrl();
+                    switch (mService) {
+                        case "UberX":
+                            mRadioGroup.check(R.id.UberX);
+                            break;
+                        case "UberBlack":
+                            mRadioGroup.check(R.id.UberBlack);
+                            break;
+                        case "UberXl":
+                            mRadioGroup.check(R.id.UberXl);
+                            break;
                     }
-                    if(map.get("phone")!=null){
-                        mPhone = map.get("phone").toString();
-                        mPhoneField.setText(mPhone);
-                    }
-                    if(map.get("car")!=null){
-                        mCar = map.get("car").toString();
-                        mCarField.setText(mCar);
-                    }
-                    if(map.get("service")!=null){
-                        mService = map.get("service").toString();
-                        switch (mService){
-                            case"UberX":
-                                mRadioGroup.check(R.id.UberX);
-                                break;
-                            case"UberBlack":
-                                mRadioGroup.check(R.id.UberBlack);
-                                break;
-                            case"UberXl":
-                                mRadioGroup.check(R.id.UberXl);
-                                break;
-                        }
-                    }
-                    if(map.get("profileImageUrl")!=null){
-                        mProfileImageUrl = map.get("profileImageUrl").toString();
-                        Glide.with(getApplication()).load(mProfileImageUrl).into(mProfileImage);
-                    }
-                }
+
+                    Glide.with(getApplication()).load(driver.getmProfileImageUrl()).into(mProfileImage);
+                } else
+
+                    loadFromAccount();
             }
 
             @Override
@@ -149,78 +122,65 @@ public class DriverSettingsActivity extends AppCompatActivity {
         });
     }
 
+    private void loadFromAccount() {
+        isFirst = true;
+        DatabaseReference mAccountDatabase = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_ACCOUNT).child(userID);
+        mAccountDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+                    account = dataSnapshot.getValue(Account.class);
+                    mNameField.setText(account.getFirst_name() + " " + account.getLast_name());
+                    mPhoneField.setText(account.getPhone());
+                    Glide.with(getApplication()).load(account.getAvartar()).into(mProfileImage);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
 
 
     private void saveUserInformation() {
-        mName = mNameField.getText().toString();
-        mPhone = mPhoneField.getText().toString();
-        mCar = mCarField.getText().toString();
-
+        if (mNameField.getText().toString().isEmpty()) {
+            mNameField.setError(getString(R.string.not_null));
+            return;
+        }
+        if (mCarField.getText().toString().isEmpty()) {
+            mCarField.setError(getString(R.string.not_null));
+            return;
+        }
+        if (mPhoneField.getText().toString().isEmpty()) {
+            mPhoneField.setError(getString(R.string.not_null));
+            return;
+        }
+        Driver driver = new Driver();
+        driver.setmProfileImageUrl(resultUri);
+        driver.setmName(mNameField.getText().toString());
+        driver.setmPhone(mPhoneField.getText().toString());
+        driver.setmCar(mCarField.getText().toString());
+        if (isFirst) driver.setmProfileImageUrl(account.getAvartar());
         int selectId = mRadioGroup.getCheckedRadioButtonId();
 
         final RadioButton radioButton = (RadioButton) findViewById(selectId);
 
-        if (radioButton.getText() == null){
+        if (radioButton.getText() == null) {
             return;
         }
 
-        mService = radioButton.getText().toString();
+        driver.setmService(radioButton.getText().toString());
 
-        Map userInfo = new HashMap();
-        userInfo.put("name", mName);
-        userInfo.put("phone", mPhone);
-        userInfo.put("car", mCar);
-        userInfo.put("service", mService);
-        mDriverDatabase.updateChildren(userInfo);
+        mDriverDatabase.setValue(driver);
+        finish();
 
-        if(resultUri != null) {
-
-            StorageReference filePath = FirebaseStorage.getInstance().getReference().child("profile_images").child(userID);
-            Bitmap bitmap = null;
-            try {
-                bitmap = MediaStore.Images.Media.getBitmap(getApplication().getContentResolver(), resultUri);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 20, baos);
-            byte[] data = baos.toByteArray();
-            UploadTask uploadTask = filePath.putBytes(data);
-
-            uploadTask.addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    finish();
-                    return;
-                }
-            });
-            uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
-
-                    Map newImage = new HashMap();
-                    newImage.put("profileImageUrl", downloadUrl.toString());
-                    mDriverDatabase.updateChildren(newImage);
-
-                    finish();
-                    return;
-                }
-            });
-        }else{
-            finish();
-        }
 
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == 1 && resultCode == Activity.RESULT_OK){
-            final Uri imageUri = data.getData();
-            resultUri = imageUri;
-            mProfileImage.setImageURI(resultUri);
-        }
     }
 }

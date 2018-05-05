@@ -92,7 +92,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_driver_map);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        // Obtain the SupportMapFragment and get notified when the customer_map is ready to be used.
         polylines = new ArrayList<>();
 
 
@@ -510,7 +510,7 @@ public class DriverMapActivity extends FragmentActivity implements OnMapReadyCal
         }
 
         polylines = new ArrayList<>();
-        //add route(s) to the map.
+        //add route(s) to the customer_map.
         for (int i = 0; i <route.size(); i++) {
 
             //In case of more than 5 alternative routes

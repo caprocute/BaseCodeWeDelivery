@@ -93,7 +93,7 @@ public class CustomerMapActivity extends FragmentActivity implements OnMapReadyC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_costumer_map);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        // Obtain the SupportMapFragment and get notified when the customer_map is ready to be used.
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 

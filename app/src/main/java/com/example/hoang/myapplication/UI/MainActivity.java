@@ -3,7 +3,9 @@ package com.example.hoang.myapplication.UI;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -19,6 +21,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
+import com.example.hoang.myapplication.Fragment.DriverMap;
 import com.example.hoang.myapplication.Fragment.UserMap;
 import com.example.hoang.myapplication.Model.Account;
 import com.example.hoang.myapplication.Model.Request;
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity
     private TextView txtHeaderName;
     private final String CHILD_ACCOUNT = "ACCOUNT";
     private Account userData;
+    private boolean loginMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,25 +58,31 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
+        mAuth = FirebaseAuth.getInstance();
+        user = mAuth.getCurrentUser();
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
+        SharedPreferences sharedPreferences = getSharedPreferences(UserTypeActivity.LOGIN_MODE, Context.MODE_PRIVATE);
+        loginMode = sharedPreferences.getBoolean(UserTypeActivity.LOGIN_MODE, true);
+
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         View header = navigationView.getHeaderView(0);
         profileImage = (CircleImageView) header.findViewById(R.id.profile_image);
         txtHeaderName = (TextView) header.findViewById(R.id.txtheader_name);
-
-        fragment = new UserMap();
-        fragmentManager.beginTransaction().replace(R.id.main_container, fragment, "MAP_FRAGMENT").commit();
-
+        if (loginMode) {
+            fragment = new UserMap();
+            fragmentManager.beginTransaction().replace(R.id.main_container, fragment, "MAP_FRAGMENT").commit();
+        } else {
+            fragment = new DriverMap();
+            fragmentManager.beginTransaction().replace(R.id.main_container, fragment, "MAP_FRAGMENT").commit();
+        }
         final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_ACCOUNT);
-        mAuth = FirebaseAuth.getInstance();
-        user = mAuth.getCurrentUser();
+
         mStorageRef = FirebaseStorage.getInstance().getReference();
         DatabaseReference userRoot = root.child(user.getUid());
         userRoot.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -176,34 +186,33 @@ public class MainActivity extends AppCompatActivity
                 Intent intent = new Intent(MainActivity.this, PersonalActivity.class);
                 startActivity(intent);
                 break;
-            case R.id.test_driver:
-                break;
-            case R.id.btnNearDriver:
-                break;
+
         }
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RecyclerListAdapter.REQUEST_CODE_EXAMPLE) {
+        if (loginMode) {
+            if (requestCode == RecyclerListAdapter.REQUEST_CODE_EXAMPLE) {
 
-            // resultCode được set bởi DetailActivity
-            // RESULT_OK chỉ ra rằng kết quả này đã thành công
-            if (resultCode == Activity.RESULT_OK) {
-                // Nhận dữ liệu từ Intent trả về
-                final Request result = (Request) data.getParcelableExtra(RequestActivity.EXTRA_DATA);
-                final int number = data.getIntExtra(RequestActivity.EXTRA_NUMBER, -1);
-                if (number != -1) {
-                    UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
-                    if (myFragment != null && myFragment.isVisible()) {
-                        myFragment.updateRequestList(number, result);
+                // resultCode được set bởi DetailActivity
+                // RESULT_OK chỉ ra rằng kết quả này đã thành công
+                if (resultCode == Activity.RESULT_OK) {
+                    // Nhận dữ liệu từ Intent trả về
+                    final Request result = (Request) data.getParcelableExtra(RequestActivity.EXTRA_DATA);
+                    final int number = data.getIntExtra(RequestActivity.EXTRA_NUMBER, -1);
+                    if (number != -1) {
+                        UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
+                        if (myFragment != null && myFragment.isVisible()) {
+                            myFragment.updateRequestList(number, result);
+                        }
                     }
+                    // Sử dụng kết quả result bằng cách hiện Toast
+                    Toast.makeText(this, "Result: " + result.getDestinationName(), Toast.LENGTH_LONG).show();
+                } else {
+                    // DetailActivity không thành công, không có data trả về.
                 }
-                // Sử dụng kết quả result bằng cách hiện Toast
-                Toast.makeText(this, "Result: " + result.getDestinationName(), Toast.LENGTH_LONG).show();
-            } else {
-                // DetailActivity không thành công, không có data trả về.
             }
         }
     }

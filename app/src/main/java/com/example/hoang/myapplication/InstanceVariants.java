@@ -12,6 +12,7 @@ public class InstanceVariants {
     public static final String CHILD_WORKING_CUSTOMER = "CUSTOMER";
     public static final String CHILD_TRIPS = "TRIPS";
     public static final String CHILD_ACCOUNT = "ACCOUNT";
-    public static final String CHILD_ACCOUNT_DRIVERS = "CUSTOMERS";
-    public static final String CHILD_ACCOUNT_CUSTOMERS = "DRIVERS";
+    public static final String CHILD_ACCOUNT_DRIVERS = "DRIVER";
+    public static final String CHILD_ACCOUNT_CUSTOMERS = "CUSTOMER";
+    public static final String CHILD_SHARE_USER = "SHARE_USER";
 }
