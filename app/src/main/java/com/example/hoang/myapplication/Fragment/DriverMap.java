@@ -10,12 +10,15 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.Gravity;
@@ -76,6 +79,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
@@ -163,7 +167,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private ImageView mCustomerProfileImage;
 
     private TextView mCustomerName, mCustomerPhone, mCustomerDestination;
-
+    private Boolean isAccept;
     private Driver mDriver;
     private FirebaseUser mUser;
     private boolean mDriverType;
@@ -265,8 +269,17 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         });
     }
 
+    private TextView txtMoney, txtDriverTypeAccept, txtTimeRemain;
+    private RecyclerView listTrip;
+    private Button btnAccept, btnDecline;
+    private ConstraintLayout group1, group2;
+    private Boolean isStopTime = false;
+    private long stopTime;
+
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
+
+        // group 1  main screen
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getActivity());
         groupBottomBar = (LinearLayout) getView().findViewById(R.id.groupBottomBar);
         groupDetail = (ConstraintLayout) getView().findViewById(R.id.groupDetail);
@@ -284,20 +297,41 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         txtRating = (TextView) getView().findViewById(R.id.txtRating);
         txtCancelRating = (TextView) getView().findViewById(R.id.txtCancelRate);
         txtStatus = (TextView) getView().findViewById(R.id.txtStatus);
+        group1 = (ConstraintLayout) getView().findViewById(R.id.groupDriverMap1);
 
+        // group 2 accept screen
+        txtMoney = (TextView) getView().findViewById(R.id.txtMoney);
+        txtDriverTypeAccept = (TextView) getView().findViewById(R.id.txtDriverType);
+        txtTimeRemain = (TextView) getView().findViewById(R.id.txtTimeRemain);
+        listTrip = (RecyclerView) getView().findViewById(R.id.listTrip);
+        btnAccept = (Button) getView().findViewById(R.id.btnAccept);
+        btnDecline = (Button) getView().findViewById(R.id.btnDecline);
+        group2 = (ConstraintLayout) getView().findViewById(R.id.groupDriverMap2);
+
+        btnAccept.setOnClickListener(this);
+        btnDecline.setOnClickListener(this);
+
+
+        // handle event
         btnStatus.setOnClickListener(this);
         btnStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    imgStatus.setImageDrawable(getActivity().getDrawable(R.drawable.ic_on));
-                    txtStatus.setText("Đang hoạt động");
-                    connectDriver();
+                    if (!isStopTime) {
+                        imgStatus.setImageDrawable(getActivity().getDrawable(R.drawable.ic_on));
+                        txtStatus.setText("Đang hoạt động");
+                        connectDriver();
+                    } else {
+                        btnStatus.setChecked(false);
+                        Toast.makeText(getActivity(), "Bạn đang trong thời gian tạm khóa. Kích hoạt lại sau " + stopTime + " giây nữa.", Toast.LENGTH_LONG).show();
+                    }
                 } else {
                     imgStatus.setImageDrawable(getActivity().getDrawable(R.drawable.ic_off));
                     txtStatus.setText("Tạm ngưng");
                     disconnectDriver();
                 }
+
             }
         });
         btnBottom.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -310,7 +344,8 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 }
             }
         });
-
+        group1.setVisibility(View.VISIBLE);
+        group2.setVisibility(View.GONE);
         polylines = new ArrayList<>();
         getAssignedCustomer();
 
@@ -346,9 +381,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 if (dataSnapshot.exists()) {
                     customerId = dataSnapshot.getValue().toString();
                     // todo show acceptdialog
-                    getAssignedCustomerPickupLocation();
-                    getAssignedCustomerDestination();
-                    getAssignedCustomerInfo();
+                    showAcceptScreen();
                 } else {
                     endRide();
                 }
@@ -358,6 +391,75 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             public void onCancelled(DatabaseError databaseError) {
             }
         });
+    }
+
+    private void showAcceptScreen() {
+        isAccept = false;
+        group1.setVisibility(View.GONE);
+        group2.setVisibility(View.VISIBLE);
+        tripRequests.clear();
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+
+        Query query = reference.child(InstanceVariants.CHILD_REQUEST).orderByChild("tripID").equalTo(customerId);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    // dataSnapshot is the "issue" node with all children with id 0
+                    for (DataSnapshot issue : dataSnapshot.getChildren()) {
+                        Request request = new Request();
+                        Map<String, Object> driverMap = (Map<String, Object>) issue.getValue();
+                        if (driverMap.get("id") != null)
+                            request.setId(driverMap.get("id").toString());
+                        if (driverMap.get("destinationName") != null)
+                            request.setDestinationName(driverMap.get("destinationName").toString());
+                        if (driverMap.get("money") != null)
+                            request.setMoney((long) driverMap.get("money"));
+                        if (driverMap.get("tripID") != null)
+                            request.setTripID(driverMap.get("tripID").toString());
+                        if (driverMap.get("note") != null)
+                            request.setNote(driverMap.get("note").toString());
+                        if (driverMap.get("receiverName") != null)
+                            request.setReceiverName(driverMap.get("receiverName").toString());
+                        if (driverMap.get("receiverNumber") != null)
+                            request.setReceiverNumber(driverMap.get("receiverNumber").toString());
+                        if (driverMap.get("destination") != null) {
+                            Map<String, Map<String, String>> stringMapMap = (Map<String, Map<String, String>>) driverMap.get("destination");
+                        }
+                        tripRequests.add(request);
+
+                    }
+                    adapter = new RecyclerListAdapter(getActivity(), null, tripRequests);
+                    listTrip.setAdapter(adapter);
+                    listTrip.setLayoutManager(new LinearLayoutManager(getActivity()));
+                    showCountDown();
+                } else
+                    Toast.makeText(getActivity(), "Không tìm thấy dữ liệu chuyến đi!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    CountDownTimer countDownTimer;
+
+    private void showCountDown() {
+
+        countDownTimer = new CountDownTimer(60000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                txtTimeRemain.setText(millisUntilFinished / 1000 + "");
+                //here you can have your logic to set text to edittext
+            }
+
+            public void onFinish() {
+                txtTimeRemain.setText("done!");
+            }
+
+        }.start();
     }
 
     private void getAssignedCustomerDestination() {
@@ -402,6 +504,8 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private ValueEventListener assignedCustomerPickupLocationRefListener;
 
     private void getAssignedCustomerPickupLocation() {
+        group1.setVisibility(View.VISIBLE);
+        group2.setVisibility(View.GONE);
         assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_CUSTOMER_REQUEST).child(customerId).child("l");
         assignedCustomerPickupLocationRefListener = assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -417,7 +521,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                         locationLng = Double.parseDouble(map.get(1).toString());
                     }
                     pickupLatLng = new LatLng(locationLat, locationLng);
-                    pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLatLng).title("pickup location").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
+                    pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLatLng).title("Điểm nhận hàng").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
                     getRouteToMarker(pickupLatLng);
                 }
             }
@@ -561,9 +665,64 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             case R.id.btnCurrentPlace2:
                 getDeviceLocation();
                 break;
+            case R.id.btnAccept:
+                isAccept = true;
+                if (isAccept) {
+                    countDownTimer.cancel();
+                    getAssignedCustomerPickupLocation();
+                    getAssignedCustomerDestination();
+                    getAssignedCustomerInfo();
+                }
+                break;
+            case R.id.btnDecline:
+                showAlertDialog();
+                break;
 
 
         }
+
+    }
+
+    public void showAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Chú ý!");
+        builder.setMessage("Từ chối đơn hàng sẽ đưa bạn về trạng thái tạm nghỉ trong 2 phút. Bạn có muốn từ chối đơn hàng này không? ");
+        builder.setCancelable(false);
+        builder.setPositiveButton("Đổng ý", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                btnStatus.setChecked(false);
+                isAccept = false;
+                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                        .child(InstanceVariants.CHILD_WORKING_DRIVER).child(userId).child("customerRequest");
+                driverRef.removeValue();
+                group1.setVisibility(View.VISIBLE);
+                group2.setVisibility(View.GONE);
+                isStopTime = true;
+                new CountDownTimer(120000, 1000) {
+
+                    public void onTick(long millisUntilFinished) {
+                        //here you can have your logic to set text to edittext
+                        stopTime = millisUntilFinished / 1000;
+                    }
+
+                    public void onFinish() {
+                        isStopTime = false;
+                    }
+
+                }.start();
+
+            }
+        });
+        builder.setNegativeButton("Hủy bỏ", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
 
     }
 

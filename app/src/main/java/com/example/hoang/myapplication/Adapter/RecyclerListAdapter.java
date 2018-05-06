@@ -35,8 +35,10 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
     private List<Request> mItems = new ArrayList<>();
     private Context context;
     private final OnStartDragListener mDragStartListener;
+    private boolean check = false;
 
     public RecyclerListAdapter(Context context, OnStartDragListener dragStartListener, List<Request> mItems) {
+        if (dragStartListener == null) check = true;
         mDragStartListener = dragStartListener;
         this.mItems = mItems;
         this.context = context;
@@ -94,15 +96,16 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
             }
         });
         // Start a drag whenever the handle view it touched
-        holder.imgBusstop.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
-                    mDragStartListener.onStartDrag(holder);
+        if (check)
+            holder.imgBusstop.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    if (MotionEventCompat.getActionMasked(event) == MotionEvent.ACTION_DOWN) {
+                        mDragStartListener.onStartDrag(holder);
+                    }
+                    return false;
                 }
-                return false;
-            }
-        });
+            });
         if (mItems.get(position).isRequestFilled()) {
             holder.imgTripRequest.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -125,12 +128,20 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
 
         Button dialogBack = (Button) layout.findViewById(R.id.btnBack);
         Button dialogConfirm = (Button) layout.findViewById(R.id.btnComfirm);
-        Button dialogUpload = (Button) layout.findViewById(R.id.btnBack);
+        Button dialogUpload = (Button) layout.findViewById(R.id.btnUploadAnh);
 
         final EditText txtReceiverName = (EditText) layout.findViewById(R.id.edtTenNguoiNhan);
+        final TextView txtDialogName = (TextView) layout.findViewById(R.id.txtDialogName);
         final EditText txtReceiverPhone = (EditText) layout.findViewById(R.id.edtSoDienThoai);
         final EditText txtNote = (EditText) layout.findViewById(R.id.edtGhiChu);
-
+        if (check) {
+            dialogConfirm.setVisibility(View.GONE);
+            dialogUpload.setVisibility(View.GONE);
+            txtDialogName.setText("Thông tin đơn hàng");
+            txtNote.setEnabled(false);
+            txtReceiverName.setEnabled(false);
+            txtReceiverPhone.setEnabled(false);
+        }
         if (request.isRequestFilled()) {
             txtNote.setText(request.getNote());
             txtReceiverName.setText(request.getReceiverName());

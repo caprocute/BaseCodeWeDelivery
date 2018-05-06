@@ -19,7 +19,7 @@ public class Request implements Parcelable {
         receiverNumber = in.readString();
         destination = in.readParcelable(LatLng.class.getClassLoader());
         note = in.readString();
-        money = in.readFloat();
+        money = in.readLong();
     }
 
     public static final Creator<Request> CREATOR = new Creator<Request>() {
@@ -98,7 +98,7 @@ public class Request implements Parcelable {
         return money;
     }
 
-    public void setMoney(float money) {
+    public void setMoney(long money) {
         this.money = money;
     }
 
@@ -110,12 +110,15 @@ public class Request implements Parcelable {
         this.timeDrop = timeDrop;
     }
 
+    public Request() {
+    }
+
     public Request(String id,
                    String tripID,
                    String receiverName,
                    String receiverNumber, LatLng destination,
                    String note,
-                   float money,
+                   long money,
                    Date timeDrop) {
         this.id = id;
         this.tripID = tripID;
@@ -130,7 +133,7 @@ public class Request implements Parcelable {
 
     private LatLng destination;
     private String note;
-    private float money;
+    private long money;
     private Date timeDrop;
 
     @Override
@@ -158,7 +161,7 @@ public class Request implements Parcelable {
 
     public boolean isStartPointAndItDone() {
         if (this.destinationName == null || this.destinationName.isEmpty()) return false;
-        if (this.destination== null) return false;
+        if (this.destination == null) return false;
         return true;
     }
 

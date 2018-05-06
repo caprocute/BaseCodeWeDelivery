@@ -14,7 +14,7 @@
             android:layout_height="match_parent">
 
             <TextView
-                android:id="@+id/textView14"
+                android:id="@+id/txtDialogName"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
@@ -65,31 +65,46 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/containerUpload" />
 
-            <Button
-                android:id="@+id/btnBack"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:layout_marginEnd="32dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/button_white"
-                android:text="Quay lại"
-                android:textAllCaps="false"
-                app:layout_constraintEnd_toStartOf="@+id/btnComfirm"
-                app:layout_constraintTop_toBottomOf="@+id/textView19" />
-
-            <Button
-                android:id="@+id/btnComfirm"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:layout_marginBottom="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/button_white"
-                android:text="Xác nhận"
-                android:textAllCaps="false"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginStart="8dp"
+                android:gravity="right"
+                android:orientation="horizontal"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView19" />
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/edtGhiChu"
+                app:layout_constraintVertical_bias="0.0">
+
+                <Button
+                    android:id="@+id/btnComfirm"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginBottom="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/button_white"
+                    android:text="Xác nhận"
+                    android:textAllCaps="false"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/textView19" />
+
+                <Button
+                    android:id="@+id/btnBack"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="32dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/button_white"
+                    android:text="Quay lại"
+                    android:textAllCaps="false"
+                    app:layout_constraintEnd_toStartOf="@+id/btnComfirm"
+                    app:layout_constraintTop_toBottomOf="@+id/textView19" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/textView16"
@@ -101,7 +116,7 @@
                 android:text="Tên người nhận"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textView14" />
+                app:layout_constraintTop_toBottomOf="@+id/txtDialogName" />
 
             <TextView
                 android:id="@+id/textView17"
