@@ -51,8 +51,8 @@
             android:theme="@style/NoActionBar" />
         <activity
             android:name=".UI.RequestActivity"
-            android:theme="@style/Base.Theme.AppCompat.Light.DarkActionBar"></activity>
-        <activity android:name=".Fragment.DriverMap"></activity>
+            android:theme="@style/Base.Theme.AppCompat.Light.DarkActionBar" />
+        <activity android:name=".Fragment.DriverMap" />
         <activity android:name=".Test.DriverLoginActivity" />
         <activity android:name=".Test.CustomerLoginActivity" />
         <activity android:name=".Test.DriverMapActivity" />
@@ -60,7 +60,8 @@
         <activity android:name=".Test.CustomerSettingsActivity" />
         <activity android:name=".Test.DriverSettingsActivity" />
         <activity android:name=".Test.HistoryActivity" />
-        <activity android:name=".Test.HistorySingleActivity"></activity>
+        <activity android:name=".Test.HistorySingleActivity" />
+        <activity android:name=".UI.TripReuqestActivity"></activity>
     </application>
 
 </manifest>

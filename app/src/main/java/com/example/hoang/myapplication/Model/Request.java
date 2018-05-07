@@ -94,7 +94,7 @@ public class Request implements Parcelable {
         this.note = note;
     }
 
-    public float getMoney() {
+    public long getMoney() {
         return money;
     }
 
@@ -150,7 +150,7 @@ public class Request implements Parcelable {
         dest.writeString(receiverNumber);
         dest.writeParcelable(destination, flags);
         dest.writeString(note);
-        dest.writeFloat(money);
+        dest.writeLong(money);
     }
 
     public boolean isRequestFilled() {

@@ -165,7 +165,6 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private LinearLayout mCustomerInfo;
 
     private ImageView mCustomerProfileImage;
-
     private TextView mCustomerName, mCustomerPhone, mCustomerDestination;
     private Boolean isAccept;
     private Driver mDriver;
@@ -424,7 +423,13 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                         if (driverMap.get("receiverNumber") != null)
                             request.setReceiverNumber(driverMap.get("receiverNumber").toString());
                         if (driverMap.get("destination") != null) {
-                            Map<String, Map<String, String>> stringMapMap = (Map<String, Map<String, String>>) driverMap.get("destination");
+                            Map<String, Object> destination = (Map<String, Object>) driverMap.get("destination");
+                          /*  Map<String, Map<String, String>> stringMapMap = (Map<String, Map<String, String>>) driverMap.get("destination");
+                            Map<String, String> mlat = stringMapMap.get(0);
+                            Map<String, String> mlong = stringMapMap.get(1);*/
+                            double lLat = Double.parseDouble(destination.get("latitude").toString());
+                            double lLong = Double.parseDouble(destination.get("longitude").toString());
+                            request.setDestination(new LatLng(lLat, lLong));
                         }
                         tripRequests.add(request);
 
@@ -502,11 +507,39 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
     private DatabaseReference assignedCustomerPickupLocationRef;
     private ValueEventListener assignedCustomerPickupLocationRefListener;
+    private List<Marker> markerList = new ArrayList<>();
 
     private void getAssignedCustomerPickupLocation() {
         group1.setVisibility(View.VISIBLE);
         group2.setVisibility(View.GONE);
-        assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_CUSTOMER_REQUEST).child(customerId).child("l");
+        List<LatLng> positions = new ArrayList<>();
+        positions.add(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
+        markerList.clear();
+        int height = 75;
+        int width = 75;
+        BitmapDrawable bitmapdraw = new BitmapDrawable();
+        bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_pickup);
+
+        Bitmap b = bitmapdraw.getBitmap();
+        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+        for (Request request : tripRequests) {
+            positions.add(request.getDestination());
+            markerList.add(mMap.addMarker(new MarkerOptions().
+                    position(request.getDestination()).title(request.getDestinationName()).
+                    icon(BitmapDescriptorFactory.fromBitmap(smallMarker))));
+
+        }
+        Routing routing = new Routing.Builder()
+                .travelMode(AbstractRouting.TravelMode.DRIVING)
+                .withListener(this)
+                .alternativeRoutes(false)
+                .waypoints(positions)
+                .build();
+        routing.execute();
+        for (int i=0;i<markerList.size();i++){
+            markerList.get(i).showInfoWindow();
+        }
+     /*   assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_CUSTOMER_REQUEST).child(customerId).child("l");
         assignedCustomerPickupLocationRefListener = assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -529,7 +562,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             @Override
             public void onCancelled(DatabaseError databaseError) {
             }
-        });
+        });*/
     }
 
 
@@ -578,6 +611,9 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
         if (pickupMarker != null) {
             pickupMarker.remove();
+        }
+        for (int i = 0; i < markerList.size(); i++) {
+            markerList.get(i).remove();
         }
         if (assignedCustomerPickupLocationRefListener != null) {
             assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);

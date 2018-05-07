@@ -25,6 +25,7 @@ import com.example.hoang.myapplication.Fragment.DriverMap;
 import com.example.hoang.myapplication.Fragment.UserMap;
 import com.example.hoang.myapplication.Model.Account;
 import com.example.hoang.myapplication.Model.Request;
+import com.example.hoang.myapplication.Model.Trip;
 import com.example.hoang.myapplication.R;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
@@ -194,25 +195,47 @@ public class MainActivity extends AppCompatActivity
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (loginMode) {
-            if (requestCode == RecyclerListAdapter.REQUEST_CODE_EXAMPLE) {
+            switch (requestCode) {
+                case RecyclerListAdapter.REQUEST_CODE_EXAMPLE: {
 
-                // resultCode được set bởi DetailActivity
-                // RESULT_OK chỉ ra rằng kết quả này đã thành công
-                if (resultCode == Activity.RESULT_OK) {
-                    // Nhận dữ liệu từ Intent trả về
-                    final Request result = (Request) data.getParcelableExtra(RequestActivity.EXTRA_DATA);
-                    final int number = data.getIntExtra(RequestActivity.EXTRA_NUMBER, -1);
-                    if (number != -1) {
+                    // resultCode được set bởi DetailActivity
+                    // RESULT_OK chỉ ra rằng kết quả này đã thành công
+                    if (resultCode == Activity.RESULT_OK) {
+                        // Nhận dữ liệu từ Intent trả về
+                        final Request result = (Request) data.getParcelableExtra(RequestActivity.EXTRA_DATA);
+                        final int number = data.getIntExtra(RequestActivity.EXTRA_NUMBER, -1);
+                        if (number != -1) {
+                            UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
+                            if (myFragment != null && myFragment.isVisible()) {
+                                myFragment.updateRequestList(number, result);
+                            }
+                        }
+                        // Sử dụng kết quả result bằng cách hiện Toast
+                        Toast.makeText(this, "Result: " + result.getDestinationName(), Toast.LENGTH_LONG).show();
+                    } else {
+                        // DetailActivity không thành công, không có data trả về.
+                    }
+
+                    break;
+                }
+                case UserMap.REQUEST_TRIP_COMPLETE: {
+                    if (resultCode == Activity.RESULT_OK) {
+                        // Nhận dữ liệu từ Intent trả về
+                        final Trip result = (Trip) data.getParcelableExtra("trip");
                         UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
                         if (myFragment != null && myFragment.isVisible()) {
-                            myFragment.updateRequestList(number, result);
+                            myFragment.updateTripAndSendRequest(result);
+                        }
+                    } else {
+                        Toast.makeText(this, "cancel", Toast.LENGTH_SHORT).show();
+                        UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
+                        if (myFragment != null && myFragment.isVisible()) {
+                            myFragment.resetRequestStatus();
                         }
                     }
-                    // Sử dụng kết quả result bằng cách hiện Toast
-                    Toast.makeText(this, "Result: " + result.getDestinationName(), Toast.LENGTH_LONG).show();
-                } else {
-                    // DetailActivity không thành công, không có data trả về.
+                    break;
                 }
+
             }
         }
     }

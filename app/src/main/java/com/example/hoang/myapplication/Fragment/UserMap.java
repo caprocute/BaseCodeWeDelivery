@@ -4,11 +4,15 @@ package com.example.hoang.myapplication.Fragment;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -35,14 +39,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.directions.route.AbstractRouting;
+import com.directions.route.Route;
+import com.directions.route.RouteException;
+import com.directions.route.Routing;
+import com.directions.route.RoutingListener;
+import com.example.hoang.myapplication.Adapter.HttpConnection;
 import com.example.hoang.myapplication.Adapter.OnStartDragListener;
+import com.example.hoang.myapplication.Adapter.PathJSONParser;
 import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
 import com.example.hoang.myapplication.Adapter.SimpleItemTouchHelperCallback;
 import com.example.hoang.myapplication.InstanceVariants;
+import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.Model.DriverPostion;
 import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.Model.Trip;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.UI.TripReuqestActivity;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
@@ -63,6 +76,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -70,7 +85,10 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -78,11 +96,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClickListener, OnStartDragListener {
+public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClickListener, OnStartDragListener, RoutingListener {
     private String TAG = "UserMap";
     private CameraPosition mCameraPosition;
     private GoogleMap mMap;
-
+    public static final int REQUEST_TRIP_COMPLETE = 0x9334;
     // The entry points to the Places API.
     private GeoDataClient mGeoDataClient;
     private PlaceDetectionClient mPlaceDetectionClient;
@@ -147,6 +165,9 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     ArrayList<LatLng> latLngsThread = new ArrayList<>();
     private DatabaseReference driveHasEndedRef;
     private ValueEventListener driveHasEndedRefListener;
+    private List<Polyline> polylines;
+    private Boolean isOnOtimize = false;
+    private int optimzeDistance;
 
     @Override
     public void onStartDrag(RecyclerView.ViewHolder viewHolder) {
@@ -209,7 +230,6 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         initDestinationRecycle();
-
         btnRequest = (FloatingActionButton) getView().findViewById(R.id.btn_request);
         btnCall = (FloatingActionButton) getView().findViewById(R.id.btnCall);
         btnSMS = (FloatingActionButton) getView().findViewById(R.id.btnSMS);
@@ -224,6 +244,9 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         btnRequest.setOnClickListener(this);
         btnCall.setOnClickListener(this);
         btnSMS.setOnClickListener(this);
+        polylines = new ArrayList<>();
+        getNearestDriver();
+
     }
 
     @Override
@@ -312,7 +335,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
         // Get the current location of the device and set the position of the customer_map.
         getDeviceLocation();
-
+        getNearestDriver();
 
     }
 
@@ -563,6 +586,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                     Request request = new Request("6", "12391209310", null, null, null, null, 0, null);
                     tripRequests.add(request);
                     adapter.notifyDataSetChanged();
+                    drawMapRoute(tripRequests);
                 } else
                     Toast.makeText(getActivity(), "Tối đa 5 đơn hàng", Toast.LENGTH_SHORT).show();
                 break;
@@ -570,13 +594,19 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 if (tripRequests.size() > 2) {
                     tripRequests.remove(tripRequests.size() - 1);
                     adapter.notifyDataSetChanged();
+                    drawMapRoute(tripRequests);
                 } else
                     Toast.makeText(getActivity(), "Cần tối thiểu điểm đi và điểm đến", Toast.LENGTH_SHORT).show();
                 break;
             case R.id.txtOptimize:
+                String url = getMapsApiDirectionsUrl();
+                ReadTask downloadTask = new ReadTask();
+                downloadTask.execute(url);
+                /*optimizeTrip();*/
                 break;
             case R.id.img_bike_mode:
                 if (!requestTrip) {
+                    endRide();
                     getDeviceLocation();
                     for (Marker marker : markerList) {
                         marker.remove();
@@ -588,6 +618,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 break;
             case R.id.img_car_mode:
                 if (!requestTrip) {
+                    endRide();
                     getDeviceLocation();
                     for (Marker marker : markerList) {
                         marker.remove();
@@ -607,16 +638,34 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 getDeviceLocation();
 
                 break;
+            case R.id.btnCall:
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                // Send phone number to intent as data
+                intent.setData(Uri.parse("tel:" + currentDriver.getmPhone()));
+                // Start the dialer app activity with number
+                startActivity(intent);
+
+                break;
+            case R.id.btnSMS:
+                Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+                sendIntent.setData(Uri.parse("sms:" + currentDriver.getmPhone()));
+                startActivity(sendIntent);
+                break;
         }
     }
 
     private void endRide() {
         requestTrip = false;
         geoQuery.removeAllListeners();
-        driverLocationRef.removeEventListener(driverLocationRefListener);
-        driveHasEndedRef.removeEventListener(driveHasEndedRefListener);
+        if (driverLocationRef != null)
+            driverLocationRef.removeEventListener(driverLocationRefListener);
+        if (mDriverFoundDatabase != null)
+            mDriverFoundDatabase.removeEventListener(mDriverFoundEventListener);
+        if (driveHasEndedRef != null)
+            driveHasEndedRef.removeEventListener(driveHasEndedRefListener);
         if (driverFoundID != null) {
-            DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest");
+            DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                    .child(InstanceVariants.CHILD_WORKING_DRIVER).child(driverFoundID).child("customerRequest");
             driverRef.removeValue();
             driverFoundID = null;
 
@@ -644,50 +693,37 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         mDriverProfileImage.setImageResource(R.mipmap.ic_default_user);*/
     }
 
+    private Trip currentTrip = new Trip();
+
     private boolean requestTrip() {
         if (tripRequests != null) {
             if (checkListRequest()) {
 
                 requestTrip = true;
-
+                drawMapRoute(tripRequests);
                 String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
+                currentTrip = new Trip();
+                currentTrip.setCustomerid(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                currentTrip.setDistanceSum(tripDistance);
+                Intent intent = new Intent(getActivity(), TripReuqestActivity.class);
+                intent.putExtra("trip", currentTrip);
+                getActivity().startActivityForResult(intent, REQUEST_TRIP_COMPLETE);
 
-                pickupLocation = new LatLng(tripRequests.get(0).getDestination().latitude, tripRequests.get(0).getDestination().longitude);
-                pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLocation).title("Pickup Here").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
-                putRequest();
-                getClosestDriver();
+               /* putRequest();
+                getClosestDriver();*/
             } else return false;
         } else return false;
         return true;
     }
 
-    private void putRequest() {
-        DatabaseReference rootTrip = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_TRIPS);
-        DatabaseReference rootRequest = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST);
-        final Trip trip = new Trip();
-        currentTripID = rootTrip.push().getKey();
-        trip.setId(currentTripID);
-        trip.setCustomerid(FirebaseAuth.getInstance().getCurrentUser().getUid());
-        rootTrip.child(currentTripID).setValue(trip);
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_CUSTOMER_REQUEST);
-
-        GeoFire geoFire = new GeoFire(ref);
-        geoFire.setLocation(currentTripID, new GeoLocation(tripRequests.get(0).getDestination().latitude, tripRequests.get(0).getDestination().longitude));
-
-
-        for (int i = 0; i < tripRequests.size(); i++) {
-            tripRequests.get(i).setTripID(currentTripID);
-            String requestId = rootRequest.push().getKey();
-            tripRequests.get(i).setId(requestId);
-            rootRequest.child(requestId).setValue(tripRequests.get(i));
-        }
-    }
+    private DatabaseReference mDriverFoundDatabase;
+    private ValueEventListener mDriverFoundEventListener;
 
     private void getClosestDriver() {
         DatabaseReference rootLocation = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_DRIVER_AVAIABLE);
         final DatabaseReference driverLocation;
-
+        pickupLocation = tripRequests.get(0).getDestination();
         if (vehicleMode) {
             driverLocation = rootLocation.child(InstanceVariants.CHILD_MOTOR_POSTION);
         } else {
@@ -704,10 +740,10 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             public void onKeyEntered(String key, GeoLocation location) {
                 if (!driverFound) {
 
-                    DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance()
+                    mDriverFoundDatabase = FirebaseDatabase.getInstance()
                             .getReference().child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).child(key);
 
-                    mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+                    mDriverFoundEventListener = new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
@@ -726,18 +762,16 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
                                 getDriverLocation();
                                 getDriverInfo();
-                                getHasRideEnded();
-/*
-                                mRequest.setText("Looking for Driver Location....");
-*/
-
+                                /*getHasRideEnded();*/
+                                txtStatus.setText("Looking for Driver Location....");
                             }
                         }
 
                         @Override
                         public void onCancelled(DatabaseError databaseError) {
                         }
-                    });
+                    };
+                    mDriverFoundDatabase.addValueEventListener(mDriverFoundEventListener);
                 }
             }
 
@@ -762,6 +796,9 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                         setFindDriverUI(0);
                         radius = 5;
                         Toast.makeText(getActivity(), "Không thể tìm thấy tài xế phù hợp với bạn", Toast.LENGTH_SHORT).show();
+                        requestTrip = false;
+                        removeRequestAndTrip();
+                        endRide();
                     }
                 }
             }
@@ -773,6 +810,31 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         });
     }
 
+    private void removeRequestAndTrip() {
+        DatabaseReference refTrip = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_TRIPS).child(currentTripID);
+        refTrip.removeValue();
+        Query query = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST).orderByChild("tripID").equalTo(currentTripID);
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    // dataSnapshot is the "issue" node with all children with id 0
+                    for (DataSnapshot issue : dataSnapshot.getChildren()) {
+                        Request request = new Request();
+                        Map<String, Object> driverMap = (Map<String, Object>) issue.getValue();
+                        if (driverMap.get("id") != null)
+                            FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST).child(driverMap.get("id").toString()).removeValue();
+
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
 
     private void getDriverLocation() {
         driverLocationRef = FirebaseDatabase.getInstance().getReference().child("driversWorking").child(driverFoundID).child("l");
@@ -809,16 +871,21 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                         txtStatus.setText("Tài xế đang trên đường đến nhận hàng " + String.valueOf(distance));
                     }
 
+                    int height = 75;
+                    int width = 75;
+
+                    BitmapDrawable bitmapdraw = new BitmapDrawable();
 
                     if (vehicleMode) {
-                        mDriverMarker = mMap.addMarker(new MarkerOptions().
-                                position(driverLatLng).title("your driver").
-                                icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_moto_marker)));
+                        bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_moto_marker);
                     } else {
-                        mDriverMarker = mMap.addMarker(new MarkerOptions().
-                                position(driverLatLng).title("your driver").
-                                icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_car_marker)));
+                        bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_car_marker);
                     }
+                    Bitmap b = bitmapdraw.getBitmap();
+                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+                    mDriverMarker = mMap.addMarker(new MarkerOptions().
+                            position(driverLatLng).title("Tài xế của bạn").
+                            icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
                 }
 
             }
@@ -830,35 +897,23 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     }
 
+    private Driver currentDriver;
+
     private void getDriverInfo() {
         setFindDriverUI(2);
         DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference()
-                .child(InstanceVariants.CHILD_ACCOUNT).child(InstanceVariants.CHILD_WORKING_DRIVER).child(driverFoundID);
+                .child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).child(driverFoundID);
         mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
-                    if (dataSnapshot.child("name") != null) {
-                        txtDriverName.setText(dataSnapshot.child("name").getValue().toString());
-                    }
-                    if (dataSnapshot.child("phone") != null) {
-                        txtVehicleDec.setText(dataSnapshot.child("phone").getValue().toString());
-                    }
-                    if (dataSnapshot.child("profileImageUrl").getValue() != null) {
-                        Glide.with(getContext()).load(dataSnapshot.child("profileImageUrl").getValue().toString()).into(imgDriver);
-                    }
-
-                    int ratingSum = 0;
-                    float ratingsTotal = 0;
-                    float ratingsAvg = 0;
-                    for (DataSnapshot child : dataSnapshot.child("rating").getChildren()) {
-                        ratingSum = ratingSum + Integer.valueOf(child.getValue().toString());
-                        ratingsTotal++;
-                    }
-                    if (ratingsTotal != 0) {
-                        ratingsAvg = ratingSum / ratingsTotal;
-                        ratingDriver.setRating(ratingsAvg);
-                    }
+                    currentDriver = dataSnapshot.getValue(Driver.class);
+                    txtDriverName.setText(currentDriver.getmName());
+                    txtVehicleDec.setText(currentDriver.getmCar());
+                    ratingDriver.setRating(currentDriver.getRating());
+                    imgDriver = (ImageView) getView().findViewById(R.id.imgDriverCustomerMap);
+                    if (currentDriver.getmProfileImageUrl() != null || !currentDriver.getmProfileImageUrl().isEmpty())
+                        Glide.with(getActivity()).load(currentDriver.getmProfileImageUrl()).into(imgDriver);
                 }
             }
 
@@ -870,7 +925,8 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
 
     private void getHasRideEnded() {
-        driveHasEndedRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(driverFoundID).child("customerRequest").child("customerRideId");
+        driveHasEndedRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                .child(InstanceVariants.CHILD_WORKING_DRIVER).child(driverFoundID).child("customerRequest")/*.child("customerRideId")*/;
         driveHasEndedRefListener = driveHasEndedRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -1036,7 +1092,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             @Override
             public void onKeyExited(String key) {
                 for (Marker marker : markerList) {
-                    if (marker.getTag().equals(key)) {
+                    if (marker.getTag() != null && marker.getTag().equals(key)) {
                         marker.remove();
                         markerList.remove(marker);
                         return;
@@ -1067,5 +1123,238 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             this.tripRequests.set(number, request);
             adapter.notifyDataSetChanged();
         }
+        drawMapRoute(tripRequests);
+    }
+
+    @Override
+    public void onRoutingFailure(RouteException e) {
+        if (e != null) {
+            Toast.makeText(getActivity(), "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(getActivity(), "Something went wrong, Try again", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onRoutingStart() {
+    }
+
+    private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
+    private int tripDistance = 0;
+
+    @Override
+    public void onRoutingSuccess(ArrayList<Route> route, int shortestRouteIndex) {
+        if (polylines.size() > 0) {
+            for (Polyline poly : polylines) {
+                poly.remove();
+            }
+        }
+
+        polylines = new ArrayList<>();
+        //add route(s) to the customer_map.
+        for (int i = 0; i < route.size(); i++) {
+
+            //In case of more than 5 alternative routes
+            int colorIndex = i % COLORS.length;
+
+            PolylineOptions polyOptions = new PolylineOptions();
+            polyOptions.color(getResources().getColor(COLORS[colorIndex]));
+            polyOptions.width(10 + i * 3);
+            polyOptions.addAll(route.get(i).getPoints());
+            Polyline polyline = mMap.addPolyline(polyOptions);
+            polyline.setTag(route.get(i).getDistanceText());
+            polylines.add(polyline);
+            if (!isOnOtimize)
+                tripDistance = route.get(i).getDistanceValue();
+            else optimzeDistance = route.get(i).getDistanceValue();
+        }
+
+    }
+
+    @Override
+    public void onRoutingCancelled() {
+    }
+
+
+    private void drawMapRoute(List<Request> tripRequests) {
+        for (Request request : tripRequests) {
+            if (request.getDestination() == null) return;
+        }
+        List<LatLng> positions = new ArrayList<>();
+        for (Marker marker : markerList) {
+            marker.remove();
+        }
+        int height = 75;
+        int width = 75;
+        BitmapDrawable bitmapdraw = new BitmapDrawable();
+        bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_pickup);
+
+        Bitmap b = bitmapdraw.getBitmap();
+        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+        for (Request request : tripRequests) {
+            positions.add(request.getDestination());
+            markerList.add(mMap.addMarker(new MarkerOptions().
+                    position(request.getDestination()).title(request.getDestinationName()).
+                    icon(BitmapDescriptorFactory.fromBitmap(smallMarker))));
+
+        }
+        Routing routing = new Routing.Builder()
+                .travelMode(AbstractRouting.TravelMode.DRIVING)
+                .withListener(this)
+                .alternativeRoutes(false)
+                .waypoints(positions)
+                .build();
+        routing.execute();
+        for (int i = 0; i < markerList.size(); i++) {
+            markerList.get(i).showInfoWindow();
+        }
+    }
+
+    private void optimizeTrip() {
+        drawMapRoute(tripRequests);
+        List<Request> list = new ArrayList<>(tripRequests);
+        printPermutation(list, 0, true);
+    }
+
+    private void printPermutation(List<Request> array, int start, boolean display) {
+        if (display) {
+            isOnOtimize = true;
+            drawMapRoute(array);
+            isOnOtimize = false;
+            if (optimzeDistance < tripDistance) {
+                tripRequests.clear();
+                tripRequests = new ArrayList<>(array);
+                adapter.notifyDataSetChanged();
+                drawMapRoute(tripRequests);
+            }
+        }
+
+        for (int j = start; j < array.size(); j++) {
+            Request temp = array.get(start);
+            array.set(start, array.get(j));
+            array.set(j, temp);
+            if (j == start) {
+                printPermutation(array, start + 1, false);
+            } else {
+                printPermutation(array, start + 1, true);
+            }
+            temp = array.get(start);
+            array.set(start, array.get(j));
+            array.set(j, temp);
+        }
+    }
+
+    private String getMapsApiDirectionsUrl() {
+        String waypoints = "waypoints=optimize:true";
+        for (Request request : tripRequests) {
+            waypoints = waypoints + "|" + request.getDestination().latitude + "," + request.getDestination().longitude;
+        }
+        String sensor = "sensor=false";
+        String params = waypoints + "&" + sensor;
+        String output = "json?origin=hanoi,SA&destination=hanoi,SA&";
+        String url = "https://maps.googleapis.com/maps/api/directions/"
+                + output + "?" + params;
+        return url;
+    }
+
+
+    private class ReadTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... url) {
+            String data = "";
+            try {
+                HttpConnection http = new HttpConnection();
+                data = http.readUrl(url[0]);
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            new ParserTask().execute(result);
+        }
+    }
+
+    private class ParserTask extends
+            AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(
+                String... jsonData) {
+
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                PathJSONParser parser = new PathJSONParser();
+                routes = parser.parse(jObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> routes) {
+            ArrayList<LatLng> points = null;
+            PolylineOptions polyLineOptions = null;
+
+            // traversing through routes
+            for (int i = 0; i < routes.size(); i++) {
+                points = new ArrayList<LatLng>();
+                polyLineOptions = new PolylineOptions();
+                List<HashMap<String, String>> path = routes.get(i);
+
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
+
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng);
+
+                    points.add(position);
+                }
+
+                polyLineOptions.addAll(points);
+                polyLineOptions.width(2);
+                polyLineOptions.color(Color.BLUE);
+            }
+
+            mMap.addPolyline(polyLineOptions);
+        }
+    }
+
+    public void updateTripAndSendRequest(Trip trip) {
+        currentTrip = trip;
+        putRequest();
+        getClosestDriver();
+    }
+
+    private void putRequest() {
+        DatabaseReference rootTrip = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_TRIPS);
+        DatabaseReference rootRequest = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST);
+        currentTripID = rootTrip.push().getKey();
+        currentTrip.setId(currentTripID);
+        rootTrip.child(currentTripID).setValue(currentTrip);
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_CUSTOMER_REQUEST);
+
+        GeoFire geoFire = new GeoFire(ref);
+        geoFire.setLocation(currentTripID, new GeoLocation(tripRequests.get(0).getDestination().latitude, tripRequests.get(0).getDestination().longitude));
+
+
+        for (int i = 0; i < tripRequests.size(); i++) {
+            tripRequests.get(i).setTripID(currentTripID);
+            String requestId = rootRequest.push().getKey();
+            tripRequests.get(i).setId(requestId);
+            rootRequest.child(requestId).setValue(tripRequests.get(i));
+        }
+    }
+
+    public void resetRequestStatus() {
+        requestTrip = false;
     }
 }

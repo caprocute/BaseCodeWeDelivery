@@ -271,7 +271,7 @@
                         app:layout_constraintTop_toTopOf="parent">
 
                         <ImageView
-                            android:id="@+id/imgDriver"
+                            android:id="@+id/imgDriverCustomerMap"
                             android:layout_width="50dp"
                             android:layout_height="50dp"
                             android:layout_marginBottom="8dp"
@@ -289,7 +289,7 @@
                             android:layout_marginStart="8dp"
                             android:layout_marginTop="32dp"
                             android:text="TextView"
-                            app:layout_constraintStart_toEndOf="@+id/imgDriver"
+                            app:layout_constraintStart_toEndOf="@+id/imgDriverCustomerMap"
                             app:layout_constraintTop_toTopOf="parent" />
 
                         <RatingBar
@@ -304,7 +304,7 @@
                             android:scaleX="0.5"
                             android:scaleY="0.5"
                             app:layout_constraintBottom_toTopOf="@+id/txtVehiceDec"
-                            app:layout_constraintStart_toEndOf="@+id/imgDriver"
+                            app:layout_constraintStart_toEndOf="@+id/imgDriverCustomerMap"
                             app:layout_constraintTop_toBottomOf="@+id/txtDriverName" />
 
                         <TextView
@@ -315,7 +315,7 @@
                             android:layout_marginStart="8dp"
                             android:text="TextView"
                             app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintStart_toEndOf="@+id/imgDriver" />
+                            app:layout_constraintStart_toEndOf="@+id/imgDriverCustomerMap" />
 
                     </android.support.constraint.ConstraintLayout>
                 </android.support.constraint.ConstraintLayout>
