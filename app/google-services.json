@@ -15,16 +15,16 @@
       },
       "oauth_client": [
         {
-          "client_id": "557502955150-rng39ouve5emoa13o0qevv58m54j2ho0.apps.googleusercontent.com",
-          "client_type": 3
-        },
-        {
-          "client_id": "557502955150-b14e5iejmvpth91ir87c67g63gsf757v.apps.googleusercontent.com",
+          "client_id": "557502955150-8k4tikks88kb49gtat7k24k8h6nn376m.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.example.hoang.myapplication",
-            "certificate_hash": "1685628af1d570298f01c54cd21afb72b054a689"
+            "certificate_hash": "628309d2f0d625695c6e5c2ab4fcbd98141e6817"
           }
+        },
+        {
+          "client_id": "557502955150-rng39ouve5emoa13o0qevv58m54j2ho0.apps.googleusercontent.com",
+          "client_type": 3
         },
         {
           "client_id": "557502955150-3adu0sen514pco39g0drf2b2g66vbcic.apps.googleusercontent.com",
@@ -33,7 +33,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBLFeLQ5ehJsmw0vWjm6Ffco-2GkSo-qSk"
+          "current_key": "AIzaSyD5YO1l1VWL7kQMUj8gtWhwZMn-TJMRJxY"
         }
       ],
       "services": {

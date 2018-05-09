@@ -61,7 +61,7 @@
         <activity android:name=".Test.DriverSettingsActivity" />
         <activity android:name=".Test.HistoryActivity" />
         <activity android:name=".Test.HistorySingleActivity" />
-        <activity android:name=".UI.TripReuqestActivity"></activity>
+        <activity android:name=".UI.TripReuqestActivity" />
     </application>
 
 </manifest>
