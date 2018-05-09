@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide;
 import com.example.hoang.myapplication.InstanceVariants;
 import com.example.hoang.myapplication.Model.Account;
 import com.example.hoang.myapplication.Model.Driver;
+import com.example.hoang.myapplication.Model.ShareCustomer;
 import com.example.hoang.myapplication.R;
 import com.example.hoang.myapplication.Test.DriverSettingsActivity;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
@@ -50,7 +51,7 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
 
         loginUser = (Button) findViewById(R.id.loginCustomer);
         loginDriver = (Button) findViewById(R.id.loginDriver);
-        avatar = (CircleImageView) findViewById(R.id.profile_image);
+        avatar = (CircleImageView) findViewById(R.id.profileImage);
         txtName = (TextView) findViewById(R.id.txtName);
 
         mAuth = FirebaseAuth.getInstance();
@@ -94,18 +95,71 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
         SharedPreferences sharedPreferences = getSharedPreferences(LOGIN_MODE, Context.MODE_PRIVATE);
         switch (view.getId()) {
             case R.id.loginCustomer:
-                Intent intent = new Intent(UserTypeActivity.this, MainActivity.class);
-                intent.putExtra("logintype", 0);
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putBoolean(LOGIN_MODE, true);
-                editor.commit();
-                finish();
-                startActivity(intent);
+
+                loadCustomerAccount();
                 break;
             case R.id.loginDriver:
                 loadDriverAccount();
                 break;
         }
+    }
+
+    private Boolean loadCustomerAccount() {
+        DatabaseReference refRoot = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_SHARE_USER);
+        final DatabaseReference refCusRoof = refRoot.child(InstanceVariants.CHILD_ACCOUNT_CUSTOMERS);
+
+        final String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        refCusRoof.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    SharedPreferences sharedPreferences = getSharedPreferences(LOGIN_MODE, Context.MODE_PRIVATE);
+                    Intent intent = new Intent(UserTypeActivity.this, MainActivity.class);
+                    intent.putExtra("logintype", 0);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putBoolean(LOGIN_MODE, true);
+                    editor.commit();
+                    finish();
+                    startActivity(intent);
+                    startActivity(intent);
+
+                } else {
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_ACCOUNT);
+                    ref.child(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+                                Account account = dataSnapshot.getValue(Account.class);
+                                ShareCustomer shareCustomer = new ShareCustomer();
+                                shareCustomer.setAvartar(account.getAvartar());
+                                shareCustomer.setFirst_name(account.getFirst_name());
+                                shareCustomer.setId(account.getId());
+                                shareCustomer.setLast_name(account.getLast_name());
+                                shareCustomer.setPhone(account.getPhone());
+                                shareCustomer.setRating(account.getRating());
+                                shareCustomer.setTrip_accept(account.getTrip_accept());
+                                shareCustomer.setTrip_cancel(account.getTrip_cancel());
+                                shareCustomer.setTrip_count(account.getTrip_count());
+                                refCusRoof.child(userId).setValue(shareCustomer);
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+        return true;
+
     }
 
     private Driver mDriver;

@@ -99,14 +99,11 @@ public class DriverSettingsActivity extends AppCompatActivity {
                     mService = driver.getmService();
                     resultUri=driver.getmProfileImageUrl();
                     switch (mService) {
-                        case "UberX":
+                        case "HereBike":
                             mRadioGroup.check(R.id.UberX);
                             break;
-                        case "UberBlack":
+                        case "HereCar":
                             mRadioGroup.check(R.id.UberBlack);
-                            break;
-                        case "UberXl":
-                            mRadioGroup.check(R.id.UberXl);
                             break;
                     }
 

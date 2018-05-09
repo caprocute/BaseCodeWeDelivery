@@ -868,10 +868,10 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                     if (distance < 100) {
                         txtStatus.setText("Tài xế đã đến!");
                     } else {
-                        txtStatus.setText("Tài xế đang trên đường đến nhận hàng " + String.valueOf(distance));
+                        txtStatus.setText("Tài xế đang trên đường đến nhận hàng. Còn khoảng " + String.valueOf(distance/1000)+" km");
                     }
 
-                    int height = 75;
+                    int height = 150;
                     int width = 75;
 
                     BitmapDrawable bitmapdraw = new BitmapDrawable();
@@ -956,6 +956,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 txtRemove.setVisibility(View.VISIBLE);
                 txtOptimze.setVisibility(View.VISIBLE);
                 txtStatus.setVisibility(View.GONE);
+                btnRequest.setImageResource(R.drawable.ic_right_arrow_white);
                 break;
             case 1:
                 groupListRequest.setVisibility(View.GONE);
@@ -968,6 +969,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 txtRemove.setVisibility(View.GONE);
                 txtOptimze.setVisibility(View.GONE);
                 txtStatus.setVisibility(View.VISIBLE);
+                btnRequest.setImageResource(R.drawable.ic_cancel);
                 break;
             case 2:
                 groupListRequest.setVisibility(View.GONE);
@@ -980,6 +982,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 txtRemove.setVisibility(View.GONE);
                 txtOptimze.setVisibility(View.GONE);
                 txtStatus.setVisibility(View.VISIBLE);
+                btnRequest.setImageResource(R.drawable.ic_cancel);
                 break;
         }
     }
@@ -1332,6 +1335,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         currentTrip = trip;
         putRequest();
         getClosestDriver();
+        btnRequest.setImageResource(R.drawable.ic_cancel);
     }
 
     private void putRequest() {

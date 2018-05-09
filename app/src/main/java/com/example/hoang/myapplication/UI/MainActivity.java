@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         View header = navigationView.getHeaderView(0);
-        profileImage = (CircleImageView) header.findViewById(R.id.profile_image);
+        profileImage = (CircleImageView) header.findViewById(R.id.profileImage);
         txtHeaderName = (TextView) header.findViewById(R.id.txtheader_name);
         if (loginMode) {
             fragment = new UserMap();
@@ -181,7 +181,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onClick(final View v) {
         switch (v.getId()) {
-            case R.id.profile_image:
+            case R.id.profileImage:
                 DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
                 drawer.closeDrawer(GravityCompat.START);
                 Intent intent = new Intent(MainActivity.this, PersonalActivity.class);

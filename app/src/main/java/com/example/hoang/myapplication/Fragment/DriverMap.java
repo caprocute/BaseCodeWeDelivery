@@ -5,15 +5,18 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -30,12 +33,12 @@ import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.bumptech.glide.Glide;
 import com.directions.route.AbstractRouting;
 import com.directions.route.Route;
 import com.directions.route.RouteException;
@@ -45,6 +48,8 @@ import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
 import com.example.hoang.myapplication.InstanceVariants;
 import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.Model.Request;
+import com.example.hoang.myapplication.Model.ShareCustomer;
+import com.example.hoang.myapplication.Model.Trip;
 import com.example.hoang.myapplication.R;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
@@ -105,7 +110,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private static final int DEFAULT_ZOOM = 13;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean mLocationPermissionGranted;
-
+    private int currentProgress = 0;
     // The geographical location where the device is currently located. That is, the last-known
     // location retrieved by the Fused Location Provider.
     private Location mLastKnownLocation;
@@ -154,7 +159,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
     private int status = 0;
 
-    private String customerId = "", destination;
+    private String tripId = "", destination;
     private LatLng destinationLatLng, pickupLatLng;
     private float rideDistance;
 
@@ -176,7 +181,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             for (Location location : locationResult.getLocations()) {
                 if (getActivity().getApplicationContext() != null) {
 
-                    if (!customerId.equals("") && mLastLocation != null && location != null) {
+                    if (!tripId.equals("") && mLastLocation != null && location != null) {
                         rideDistance += mLastLocation.distanceTo(location) / 1000;
                     }
                     mLastLocation = location;
@@ -198,7 +203,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                     GeoFire geoFireAvailable = new GeoFire(refAvailable);
                     GeoFire geoFireWorking = new GeoFire(refWorking);
 
-                    switch (customerId) {
+                    switch (tripId) {
                         case "":
                             geoFireWorking.removeLocation(userId);
                             geoFireAvailable.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
@@ -250,14 +255,17 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 if (dataSnapshot.exists()) {
                     mDriver = dataSnapshot.getValue(Driver.class);
                     switch (mDriver.getmService()) {
-                        case "UberX":
+                        case "HereBike":
                             mDriverType = true;
                             break;
-                        case "UberBlack":
+                        case "HereCar":
                             mDriverType = false;
                             break;
                     }
-
+                    txtDriverType.setText(mDriver.getmService());
+                    txtRating.setText(mDriver.getRating() + "");
+                    txtAcceptRatin.setText(mDriver.getTrip_accept() + "%");
+                    txtCancelRating.setText(mDriver.getTrip_cancel() + "%");
                 }
             }
 
@@ -271,9 +279,14 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private TextView txtMoney, txtDriverTypeAccept, txtTimeRemain;
     private RecyclerView listTrip;
     private Button btnAccept, btnDecline;
-    private ConstraintLayout group1, group2;
+    private ConstraintLayout group1, group2, group3;
     private Boolean isStopTime = false;
     private long stopTime;
+    private FloatingActionButton btnCall, btnSms, btnCancel;
+    private ImageView btnListRequest, btnDirection;
+    private TextView txtCustomerName, txtTripCost;
+    private Button btnDriverTrip;
+    private SeekBar seekStatus;
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -306,10 +319,26 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         btnAccept = (Button) getView().findViewById(R.id.btnAccept);
         btnDecline = (Button) getView().findViewById(R.id.btnDecline);
         group2 = (ConstraintLayout) getView().findViewById(R.id.groupDriverMap2);
+        // group 3 status screen
+        btnCall = (FloatingActionButton) getView().findViewById(R.id.btnCall);
+        btnSms = (FloatingActionButton) getView().findViewById(R.id.btnSms);
+        btnCancel = (FloatingActionButton) getView().findViewById(R.id.btnCancel);
+        btnListRequest = (ImageView) getView().findViewById(R.id.btnListRequest);
+        btnDirection = (ImageView) getView().findViewById(R.id.btnMapDirect);
+        group3 = (ConstraintLayout) getView().findViewById(R.id.groupDriverMap3);
+        txtCustomerName = (TextView) getView().findViewById(R.id.txtCustomerName);
+        txtTripCost = (TextView) getView().findViewById(R.id.txtTripCount);
+        btnDriverTrip = (Button) getView().findViewById(R.id.btnDriverTrip);
+        seekStatus = (SeekBar) getView().findViewById(R.id.seekStatusTrip);
 
         btnAccept.setOnClickListener(this);
         btnDecline.setOnClickListener(this);
-
+        btnDriverTrip.setOnClickListener(this);
+        btnCall.setOnClickListener(this);
+        btnSms.setOnClickListener(this);
+        btnCancel.setOnClickListener(this);
+        btnListRequest.setOnClickListener(this);
+        btnDirection.setOnClickListener(this);
 
         // handle event
         btnStatus.setOnClickListener(this);
@@ -343,8 +372,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 }
             }
         });
-        group1.setVisibility(View.VISIBLE);
-        group2.setVisibility(View.GONE);
+        updateUI(0);
         polylines = new ArrayList<>();
         getAssignedCustomer();
 
@@ -378,7 +406,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    customerId = dataSnapshot.getValue().toString();
+                    tripId = dataSnapshot.getValue().toString();
                     // todo show acceptdialog
                     showAcceptScreen();
                 } else {
@@ -392,14 +420,30 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         });
     }
 
+    private Trip currentTrip;
+
     private void showAcceptScreen() {
         isAccept = false;
-        group1.setVisibility(View.GONE);
-        group2.setVisibility(View.VISIBLE);
+        currentProgress = 1;
+        updateUI(1);
         tripRequests.clear();
         DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference referenceTrip = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_TRIPS).child(tripId);
+        referenceTrip.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    currentTrip = dataSnapshot.getValue(Trip.class);
+                }
+            }
 
-        Query query = reference.child(InstanceVariants.CHILD_REQUEST).orderByChild("tripID").equalTo(customerId);
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        Query query = reference.child(InstanceVariants.CHILD_REQUEST).orderByChild("tripID").equalTo(tripId);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -510,8 +554,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private List<Marker> markerList = new ArrayList<>();
 
     private void getAssignedCustomerPickupLocation() {
-        group1.setVisibility(View.VISIBLE);
-        group2.setVisibility(View.GONE);
+        updateUI(1);
         List<LatLng> positions = new ArrayList<>();
         positions.add(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
         markerList.clear();
@@ -536,14 +579,14 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 .waypoints(positions)
                 .build();
         routing.execute();
-        for (int i=0;i<markerList.size();i++){
+        for (int i = 0; i < markerList.size(); i++) {
             markerList.get(i).showInfoWindow();
         }
-     /*   assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_CUSTOMER_REQUEST).child(customerId).child("l");
+     /*   assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_CUSTOMER_REQUEST).child(tripId).child("l");
         assignedCustomerPickupLocationRefListener = assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists() && !customerId.equals("")) {
+                if (dataSnapshot.exists() && !tripId.equals("")) {
                     List<Object> map = (List<Object>) dataSnapshot.getValue();
                     double locationLat = 0;
                     double locationLng = 0;
@@ -565,24 +608,19 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         });*/
     }
 
+    private ShareCustomer currentCustomer;
 
     private void getAssignedCustomerInfo() {
         /*mCustomerInfo.setVisibility(View.VISIBLE);*/
-        DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers").child(customerId);
+        DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference()
+                .child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_CUSTOMER).child(currentTrip.getCustomerid());
         mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
-                    Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
-                    if (map.get("name") != null) {
-                        mCustomerName.setText(map.get("name").toString());
-                    }
-                    if (map.get("phone") != null) {
-                        mCustomerPhone.setText(map.get("phone").toString());
-                    }
-                    if (map.get("profileImageUrl") != null) {
-                        Glide.with(getActivity()).load(map.get("profileImageUrl").toString()).into(mCustomerProfileImage);
-                    }
+                    currentCustomer = dataSnapshot.getValue(ShareCustomer.class);
+                    txtCustomerName.setText(currentCustomer.getLast_name()+" "+currentCustomer.getFirst_name());
+                    txtTripCost.setText(currentTrip.getMoneySum()+" VND");
                 }
             }
 
@@ -605,8 +643,8 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
         GeoFire geoFire = new GeoFire(ref);
-        geoFire.removeLocation(customerId);
-        customerId = "";
+        geoFire.removeLocation(tripId);
+        tripId = "";
         rideDistance = 0;
 
         if (pickupMarker != null) {
@@ -628,7 +666,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private void recordRide() {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userId).child("history");
-        DatabaseReference customerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers").child(customerId).child("history");
+        DatabaseReference customerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers").child(tripId).child("history");
         DatabaseReference historyRef = FirebaseDatabase.getInstance().getReference().child("history");
         String requestId = historyRef.push().getKey();
         driverRef.child(requestId).setValue(true);
@@ -636,7 +674,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
         HashMap map = new HashMap();
         map.put("driver", userId);
-        map.put("customer", customerId);
+        map.put("customer", tripId);
         map.put("rating", 0);
         map.put("destination", destination);
         map.put("location/from/lat", pickupLatLng.latitude);
@@ -650,6 +688,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private void connectDriver() {
         checkLocationPermission();
         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
+        currentProgress = 0;
         mMap.setMyLocationEnabled(true);
     }
 
@@ -704,19 +743,62 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             case R.id.btnAccept:
                 isAccept = true;
                 if (isAccept) {
+                    currentProgress = 2;
                     countDownTimer.cancel();
                     getAssignedCustomerPickupLocation();
                     getAssignedCustomerDestination();
                     getAssignedCustomerInfo();
+                    updateUI(2);
                 }
                 break;
             case R.id.btnDecline:
+                currentProgress = 0;
                 showAlertDialog();
                 break;
+            case R.id.btnCall:
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                // Send phone number to intent as data
+                intent.setData(Uri.parse("tel:" + currentCustomer.getPhone()));
+                // Start the dialer app activity with number
+                startActivity(intent);
 
+                break;
+            case R.id.btnSms:
+                Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+                sendIntent.setData(Uri.parse("sms:" + currentCustomer.getPhone()));
+                startActivity(sendIntent);
+                break;
 
         }
 
+    }
+
+    private void updateUI(int mode) {
+        switch (mode) {
+            case 0:
+                group1.setVisibility(View.VISIBLE);
+                group2.setVisibility(View.GONE);
+                group3.setVisibility(View.GONE);
+                break;
+            case 1:
+                group1.setVisibility(View.GONE);
+                group2.setVisibility(View.VISIBLE);
+                group3.setVisibility(View.GONE);
+                break;
+            case 2:
+                group1.setVisibility(View.GONE);
+                group2.setVisibility(View.GONE);
+                group3.setVisibility(View.VISIBLE);
+                break;
+            case 3:
+                group1.setVisibility(View.GONE);
+                group2.setVisibility(View.GONE);
+                group3.setVisibility(View.GONE);
+                break;
+            case 4:
+                updateUI(currentProgress);
+                break;
+        }
     }
 
     public void showAlertDialog() {
@@ -789,11 +871,6 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         mapView.onDestroy();
     }
 
-    private void updateUI(boolean check) {
-
-
-    }
-
     @Override
     public void onMapReady(GoogleMap map) {
         mMap = map;
@@ -819,14 +896,14 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             @Override
             public void onCameraMove() {
                 Log.d(TAG, "onCameraMove: ");
-                updateUI(false);
+                updateUI(3);
             }
         });
         mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
             @Override
             public void onCameraIdle() {
                 Log.d(TAG, "onCameraIdle: ");
-                updateUI(true);
+                updateUI(4);
             }
         });
 
