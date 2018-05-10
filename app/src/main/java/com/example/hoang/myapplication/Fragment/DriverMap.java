@@ -814,7 +814,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                 DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
                         .child(InstanceVariants.CHILD_WORKING_DRIVER).child(userId).child("customerRequest");
-                driverRef.removeValue();
+                driverRef.setValue(false);
                 group1.setVisibility(View.VISIBLE);
                 group2.setVisibility(View.GONE);
                 isStopTime = true;

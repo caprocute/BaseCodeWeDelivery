@@ -14,6 +14,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -719,8 +720,25 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     private DatabaseReference mDriverFoundDatabase;
     private ValueEventListener mDriverFoundEventListener;
+    private Boolean isWatingDriver = false;
+
+    private void showCountDown() {
+
+        CountDownTimer countDownTimer = new CountDownTimer(180000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                //here you can have your logic to set text to edittext
+            }
+
+            public void onFinish() {
+                endRide();
+            }
+
+        }.start();
+    }
 
     private void getClosestDriver() {
+        showCountDown();
         DatabaseReference rootLocation = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_DRIVER_AVAIABLE);
         final DatabaseReference driverLocation;
         pickupLocation = tripRequests.get(0).getDestination();
@@ -739,39 +757,64 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             @Override
             public void onKeyEntered(String key, GeoLocation location) {
                 if (!driverFound) {
+                    if (!isWatingDriver) {
+                        mDriverFoundDatabase = FirebaseDatabase.getInstance()
+                                .getReference().child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).child(key);
 
-                    mDriverFoundDatabase = FirebaseDatabase.getInstance()
-                            .getReference().child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).child(key);
+                        mDriverFoundEventListener = new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+                                    //todo remove driver from driver postion
+                                    Map<String, Object> driverMap = (Map<String, Object>) dataSnapshot.getValue();
 
-                    mDriverFoundEventListener = new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
-                                //todo remove driver from driver postion
-                                Map<String, Object> driverMap = (Map<String, Object>) dataSnapshot.getValue();
+                                /*    if (driverFound) {
+                                        return;
+                                    }*/
+                                    if (isWatingDriver) return;
+                                    isWatingDriver = true;
+                                    /* driverFound = true;*/
+                                    final String driverWattingFoundID = dataSnapshot.getKey();
+                                    DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference()
+                                            .child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).
+                                                    child(driverWattingFoundID).child("customerRequest").child(driverWattingFoundID);
+                                    driverRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            if (dataSnapshot.exists()) {
+                                                Boolean check = (Boolean) dataSnapshot.getValue();
+                                                if (check) {
+                                                    driverFound = true;
+                                                    driverFoundID = driverWattingFoundID;
 
-                                if (driverFound) {
-                                    return;
+                                                    getDriverLocation();
+                                                    getDriverInfo();
+                                                    /*getHasRideEnded();*/
+                                                    txtStatus.setText("Looking for Driver Location....");
+                                                } else {
+                                                    DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference()
+                                                            .child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).
+                                                                    child(driverWattingFoundID).child("customerRequest");
+                                                    driverRef.removeValue();
+                                                }
+                                            }
+                                        }
+
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {
+
+                                        }
+                                    });
+
                                 }
-
-                                driverFound = true;
-                                driverFoundID = dataSnapshot.getKey();
-                                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference()
-                                        .child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).child(driverFoundID).child("customerRequest");
-                                driverRef.setValue(currentTripID);
-
-                                getDriverLocation();
-                                getDriverInfo();
-                                /*getHasRideEnded();*/
-                                txtStatus.setText("Looking for Driver Location....");
                             }
-                        }
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                        }
-                    };
-                    mDriverFoundDatabase.addValueEventListener(mDriverFoundEventListener);
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                            }
+                        };
+                        mDriverFoundDatabase.addValueEventListener(mDriverFoundEventListener);
+                    } else return;
                 }
             }
 
@@ -868,7 +911,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                     if (distance < 100) {
                         txtStatus.setText("Tài xế đã đến!");
                     } else {
-                        txtStatus.setText("Tài xế đang trên đường đến nhận hàng. Còn khoảng " + String.valueOf(distance/1000)+" km");
+                        txtStatus.setText("Tài xế đang trên đường đến nhận hàng. Còn khoảng " + String.valueOf(distance / 1000) + " km");
                     }
 
                     int height = 150;
