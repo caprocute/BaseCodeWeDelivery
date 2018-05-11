@@ -53,7 +53,6 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
 
     @Override
     public void onBindViewHolder(final ItemViewHolder holder, final int position) {
-        Log.d("hieuhk", "onBindViewHolder: " + position + " " + mItems.get(position).getId());
         holder.txtBusstopName.setText(mItems.get(holder.getAdapterPosition()).getId().toString());
         if (mItems.get(position).isRequestFilled())
             holder.imgTripRequest.setImageDrawable(context.getDrawable(R.drawable.ic_trip_request_yellow));

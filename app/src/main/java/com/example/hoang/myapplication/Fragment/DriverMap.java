@@ -406,7 +406,9 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    tripId = dataSnapshot.getValue().toString();
+                    if (!tripId.isEmpty()) return;
+                    Map<String, String> map = (Map<String, String>) dataSnapshot.getValue();
+                    tripId = map.get("tripid");
                     // todo show acceptdialog
                     showAcceptScreen();
                 } else {
@@ -423,6 +425,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private Trip currentTrip;
 
     private void showAcceptScreen() {
+        Log.d("hieuhk", "showAcceptScreen: ");
         isAccept = false;
         currentProgress = 1;
         updateUI(1);
@@ -554,6 +557,9 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private List<Marker> markerList = new ArrayList<>();
 
     private void getAssignedCustomerPickupLocation() {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(mUser.getUid()).child("customerRequest").child("status");
+        ref.setValue("accept");
         updateUI(1);
         List<LatLng> positions = new ArrayList<>();
         positions.add(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()));
@@ -582,30 +588,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         for (int i = 0; i < markerList.size(); i++) {
             markerList.get(i).showInfoWindow();
         }
-     /*   assignedCustomerPickupLocationRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_CUSTOMER_REQUEST).child(tripId).child("l");
-        assignedCustomerPickupLocationRefListener = assignedCustomerPickupLocationRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists() && !tripId.equals("")) {
-                    List<Object> map = (List<Object>) dataSnapshot.getValue();
-                    double locationLat = 0;
-                    double locationLng = 0;
-                    if (map.get(0) != null) {
-                        locationLat = Double.parseDouble(map.get(0).toString());
-                    }
-                    if (map.get(1) != null) {
-                        locationLng = Double.parseDouble(map.get(1).toString());
-                    }
-                    pickupLatLng = new LatLng(locationLat, locationLng);
-                    pickupMarker = mMap.addMarker(new MarkerOptions().position(pickupLatLng).title("Điểm nhận hàng").icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_pickup)));
-                    getRouteToMarker(pickupLatLng);
-                }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });*/
     }
 
     private ShareCustomer currentCustomer;
@@ -619,8 +602,8 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
                     currentCustomer = dataSnapshot.getValue(ShareCustomer.class);
-                    txtCustomerName.setText(currentCustomer.getLast_name()+" "+currentCustomer.getFirst_name());
-                    txtTripCost.setText(currentTrip.getMoneySum()+" VND");
+                    txtCustomerName.setText(currentCustomer.getLast_name() + " " + currentCustomer.getFirst_name());
+                    txtTripCost.setText(currentTrip.getMoneySum() + " VND");
                 }
             }
 
@@ -744,7 +727,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 isAccept = true;
                 if (isAccept) {
                     currentProgress = 2;
-                    countDownTimer.cancel();
+                    if (countDownTimer != null) countDownTimer.cancel();
                     getAssignedCustomerPickupLocation();
                     getAssignedCustomerDestination();
                     getAssignedCustomerInfo();
@@ -809,12 +792,20 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         builder.setPositiveButton("Đổng ý", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                btnStatus.setChecked(false);
                 isAccept = false;
                 String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
-                        .child(InstanceVariants.CHILD_WORKING_DRIVER).child(userId).child("customerRequest");
-                driverRef.setValue(false);
+
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                        .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(mUser.getUid()).child("customerRequest").child("status");
+                ref.setValue("reject");
+
+                DatabaseReference ref2 = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                        .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(mUser.getUid()).child("customerRequest");
+                ref2.removeValue();
+
+                btnStatus.setChecked(false);
+                disconnectDriver();
+
                 group1.setVisibility(View.VISIBLE);
                 group2.setVisibility(View.GONE);
                 isStopTime = true;

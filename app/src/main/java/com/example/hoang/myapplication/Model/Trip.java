@@ -10,7 +10,6 @@ public class Trip implements Parcelable{
     private String driverid;
     private String customerid;
 
-
     public Trip(){}
 
 
