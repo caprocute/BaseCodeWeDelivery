@@ -15,4 +15,5 @@ public class InstanceVariants {
     public static final String CHILD_ACCOUNT_DRIVERS = "DRIVER";
     public static final String CHILD_ACCOUNT_CUSTOMERS = "CUSTOMER";
     public static final String CHILD_SHARE_USER = "SHARE_USER";
+    public static final String CHILD_BEARING = "BEARING";
 }

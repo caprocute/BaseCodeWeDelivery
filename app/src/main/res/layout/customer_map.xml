@@ -126,7 +126,6 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <Button
-                android:visibility="gone"
                 android:id="@+id/test_driver"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -134,6 +133,7 @@
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
                 android:text="test driver"
+                android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@+id/cardView1"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
@@ -241,10 +241,10 @@
 
                 <android.support.constraint.ConstraintLayout
                     android:id="@+id/groupFindDriver"
-                    android:visibility="gone"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
                     <ProgressBar
                         android:id="@+id/progressLoading"
@@ -261,10 +261,10 @@
                         app:layout_constraintTop_toTopOf="parent" />
 
                     <android.support.constraint.ConstraintLayout
-                        android:visibility="gone"
                         android:id="@+id/groupDriverInfor"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:visibility="gone"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
@@ -330,7 +330,40 @@
                     <android.support.v7.widget.RecyclerView
                         android:id="@+id/listDestionation"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content">
+
+                    </android.support.v7.widget.RecyclerView>
+
+                    <android.support.constraint.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/textView39"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="16dp"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginTop="16dp"
+                            android:text="Tổng quãng đường"
+                            android:textColor="@color/blacktxt"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+
+                        <TextView
+                            android:id="@+id/txtDistance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="16dp"
+                            android:layout_marginEnd="16dp"
+                            android:layout_marginTop="16dp"
+                            android:text="0 km"
+                            android:textColor="@color/blacktxt"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
+                    </android.support.constraint.ConstraintLayout>
 
                 </LinearLayout>
 
@@ -359,7 +392,6 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <android.support.design.widget.FloatingActionButton
-                android:visibility="gone"
                 android:id="@+id/btnCall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -368,6 +400,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="16dp"
                 android:src="@drawable/ic_call"
+                android:visibility="gone"
                 app:backgroundTint="@color/appColor"
                 app:layout_anchorGravity="top|end"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -377,7 +410,6 @@
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/btnSMS"
-                android:visibility="gone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_margin="@dimen/activity_horizontal_margin"
@@ -385,6 +417,7 @@
                 android:layout_marginEnd="8dp"
                 android:layout_marginTop="8dp"
                 android:src="@drawable/ic_sms"
+                android:visibility="gone"
                 app:backgroundTint="@color/appColor"
                 app:layout_anchorGravity="top|end"
                 app:layout_constraintBottom_toBottomOf="parent"

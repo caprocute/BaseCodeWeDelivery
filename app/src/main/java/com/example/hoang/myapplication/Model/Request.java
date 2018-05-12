@@ -116,7 +116,7 @@ public class Request implements Parcelable {
     public Request(String id,
                    String tripID,
                    String receiverName,
-                   String receiverNumber, LatLng destination,
+                   String receiverNumber, LatLng destination,String destinationName,
                    String note,
                    long money,
                    Date timeDrop) {
@@ -124,6 +124,7 @@ public class Request implements Parcelable {
         this.tripID = tripID;
         this.receiverName = receiverName;
         this.receiverNumber = receiverNumber;
+        this.destinationName=destinationName;
         this.destination = destination;
         this.note = note;
         this.money = money;

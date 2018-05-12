@@ -3,12 +3,17 @@ package com.example.hoang.myapplication.Fragment;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.hardware.GeomagneticField;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -175,18 +180,49 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private Driver mDriver;
     private FirebaseUser mUser;
     private boolean mDriverType;
+
+    private double bearingBetweenLocations(LatLng latLng1, LatLng latLng2) {
+
+        double PI = 3.14159;
+        double lat1 = latLng1.latitude * PI / 180;
+        double long1 = latLng1.longitude * PI / 180;
+        double lat2 = latLng2.latitude * PI / 180;
+        double long2 = latLng2.longitude * PI / 180;
+
+        double dLon = (long2 - long1);
+
+        double y = Math.sin(dLon) * Math.cos(lat2);
+        double x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1)
+                * Math.cos(lat2) * Math.cos(dLon);
+
+        double brng = Math.atan2(y, x);
+
+        brng = Math.toDegrees(brng);
+        brng = (brng + 360) % 360;
+
+        return brng;
+    }
+
     LocationCallback mLocationCallback = new LocationCallback() {
         @Override
         public void onLocationResult(LocationResult locationResult) {
             for (Location location : locationResult.getLocations()) {
                 if (getActivity().getApplicationContext() != null) {
-
+                    Log.d(TAG, "onLocationResult: tripid=" + tripId);
                     if (!tripId.equals("") && mLastLocation != null && location != null) {
                         rideDistance += mLastLocation.distanceTo(location) / 1000;
                     }
+                    Double bearing = bearingBetweenLocations(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()),
+                            new LatLng(location.getLatitude(), location.getLongitude()));
                     mLastLocation = location;
 
-
+                    GeomagneticField geoField;
+                    geoField = new GeomagneticField(
+                            Double.valueOf(location.getLatitude()).floatValue(),
+                            Double.valueOf(location.getLongitude()).floatValue(),
+                            Double.valueOf(location.getAltitude()).floatValue(),
+                            System.currentTimeMillis()
+                    );
                     LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
                     mMap.animateCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
@@ -194,6 +230,9 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                     String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
                     DatabaseReference refRoot = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_DRIVER_AVAIABLE);
                     DatabaseReference refAvailable;
+                    DatabaseReference refBearing = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_BEARING);
+                    refBearing.child(userId).setValue(bearing);
+
                     if (mDriverType) {
                         refAvailable = refRoot.child(InstanceVariants.CHILD_MOTOR_POSTION);
                     } else {
@@ -378,7 +417,10 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
     }
 
+    private boolean driverReject;
+
     private void disconnectDriver() {
+
         if (mFusedLocationClient != null) {
             mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         }
@@ -395,16 +437,19 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         geoFire.removeLocation(userId);
     }
 
+    private DatabaseReference refAvailable;
+    private ValueEventListener valueEventListenerAvaiable;
+
     private void getAssignedCustomer() {
+        driverReject = false;
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER);
-        DatabaseReference refAvailable;
+
         refAvailable = rootRef.child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(driverId).child("customerRequest");
-
-
-        refAvailable.addValueEventListener(new ValueEventListener() {
+        valueEventListenerAvaiable = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                Log.d(TAG, "onDataChange: tripId= " + tripId + " driverReject=" + driverReject);
                 if (dataSnapshot.exists()) {
                     if (!tripId.isEmpty()) return;
                     Map<String, String> map = (Map<String, String>) dataSnapshot.getValue();
@@ -412,19 +457,43 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                     // todo show acceptdialog
                     showAcceptScreen();
                 } else {
+                    Log.d(TAG, "onDataChange: data not exit");
+                    if (tripId != null && !tripId.isEmpty() && !driverReject) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setTitle("Thông báo!");
+                        builder.setMessage("Khách hàng đã hủy đơn hàng này. ");
+                        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                        AlertDialog dialog = builder.create();
+                        dialog.show();
+                    }
+                    if (refAvailable != null) {
+                        refAvailable.removeEventListener(valueEventListenerAvaiable);
+                    }
+                    currentTrip = null;
+                    tripId = "";
+                    currentCustomer = null;
                     endRide();
+                    getAssignedCustomer();
+                    currentProgress = 0;
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
             }
-        });
+        };
+        refAvailable.addValueEventListener(valueEventListenerAvaiable);
     }
 
     private Trip currentTrip;
 
     private void showAcceptScreen() {
+        if (tripId == null || tripId.isEmpty()) return;
         Log.d("hieuhk", "showAcceptScreen: ");
         isAccept = false;
         currentProgress = 1;
@@ -504,11 +573,25 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
             public void onTick(long millisUntilFinished) {
                 txtTimeRemain.setText(millisUntilFinished / 1000 + "");
+                Log.d(TAG, "onTick: " + millisUntilFinished);
                 //here you can have your logic to set text to edittext
             }
 
             public void onFinish() {
-                txtTimeRemain.setText("done!");
+                declineRequest();
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setTitle("Chú ý!");
+                builder.setMessage("Quá thời gian chờ cho phép. Bạn sẽ chuyển về trạng thái tạm nghỉ trong vòng 2 phút ");
+                builder.setCancelable(false);
+
+                builder.setNegativeButton("Đã hiểu", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        dialogInterface.dismiss();
+                    }
+                });
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
             }
 
         }.start();
@@ -525,24 +608,6 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     // todo add list of request to list
-                   /* Map<String, Object> map = (Map<String, Object>) dataSnapshot.getValue();
-                    if (map.get("destination") != null) {
-                        destination = map.get("destination").toString();
-                        mCustomerDestination.setText("Destination: " + destination);
-                    } else {
-                        mCustomerDestination.setText("Destination: --");
-                    }
-
-                    Double destinationLat = 0.0;
-                    Double destinationLng = 0.0;
-                    if (map.get("destinationLat") != null) {
-                        destinationLat = Double.valueOf(map.get("destinationLat").toString());
-                    }
-                    if (map.get("destinationLng") != null) {
-                        destinationLng = Double.valueOf(map.get("destinationLng").toString());
-                        destinationLatLng = new LatLng(destinationLat, destinationLng);
-                    }
-*/
                 }
             }
 
@@ -615,9 +680,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
 
     private void endRide() {
-/*
-        mRideStatus.setText("picked customer");
-*/
+        updateUI(0);
         erasePolylines();
 
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -639,11 +702,6 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         if (assignedCustomerPickupLocationRefListener != null) {
             assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);
         }
-        /*mCustomerInfo.setVisibility(View.GONE);*/
-    /*    mCustomerName.setText("");
-        mCustomerPhone.setText("");
-        mCustomerDestination.setText("Destination: --");
-        mCustomerProfileImage.setImageResource(R.mipmap.ic_default_user);*/
     }
 
     private void recordRide() {
@@ -792,36 +850,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         builder.setPositiveButton("Đổng ý", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                isAccept = false;
-                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-                DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
-                        .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(mUser.getUid()).child("customerRequest").child("status");
-                ref.setValue("reject");
-
-                DatabaseReference ref2 = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
-                        .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(mUser.getUid()).child("customerRequest");
-                ref2.removeValue();
-
-                btnStatus.setChecked(false);
-                disconnectDriver();
-
-                group1.setVisibility(View.VISIBLE);
-                group2.setVisibility(View.GONE);
-                isStopTime = true;
-                new CountDownTimer(120000, 1000) {
-
-                    public void onTick(long millisUntilFinished) {
-                        //here you can have your logic to set text to edittext
-                        stopTime = millisUntilFinished / 1000;
-                    }
-
-                    public void onFinish() {
-                        isStopTime = false;
-                    }
-
-                }.start();
-
+                declineRequest();
             }
         });
         builder.setNegativeButton("Hủy bỏ", new DialogInterface.OnClickListener() {
@@ -832,6 +861,40 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         });
         AlertDialog alertDialog = builder.create();
         alertDialog.show();
+
+    }
+
+    private void declineRequest() {
+        isAccept = false;
+        driverReject = true;
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(mUser.getUid()).child("customerRequest").child("status");
+        ref.setValue("reject");
+
+        DatabaseReference ref2 = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(mUser.getUid()).child("customerRequest");
+        ref2.removeValue();
+
+        btnStatus.setChecked(false);
+        disconnectDriver();
+
+        group1.setVisibility(View.VISIBLE);
+        group2.setVisibility(View.GONE);
+        isStopTime = true;
+        new CountDownTimer(120000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                //here you can have your logic to set text to edittext
+                stopTime = millisUntilFinished / 1000;
+            }
+
+            public void onFinish() {
+                isStopTime = false;
+            }
+
+        }.start();
 
     }
 

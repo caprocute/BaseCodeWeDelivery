@@ -38,6 +38,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.util.Map;
+
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainActivity extends AppCompatActivity
@@ -75,13 +77,7 @@ public class MainActivity extends AppCompatActivity
         View header = navigationView.getHeaderView(0);
         profileImage = (CircleImageView) header.findViewById(R.id.profileImage);
         txtHeaderName = (TextView) header.findViewById(R.id.txtheader_name);
-        if (loginMode) {
-            fragment = new UserMap();
-            fragmentManager.beginTransaction().replace(R.id.main_container, fragment, "MAP_FRAGMENT").commit();
-        } else {
-            fragment = new DriverMap();
-            fragmentManager.beginTransaction().replace(R.id.main_container, fragment, "MAP_FRAGMENT").commit();
-        }
+        resetMap();
         final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_ACCOUNT);
 
         mStorageRef = FirebaseStorage.getInstance().getReference();
@@ -100,6 +96,19 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+    }
+
+    public void resetMap() {
+        Fragment fragment = fragmentManager.findFragmentByTag("MAP_FRAGMENT");
+        if (fragment != null)
+            fragmentManager.beginTransaction().remove(fragment).commit();
+        if (loginMode) {
+            fragment = new UserMap();
+            fragmentManager.beginTransaction().replace(R.id.main_container, fragment, "MAP_FRAGMENT").commit();
+        } else {
+            fragment = new DriverMap();
+            fragmentManager.beginTransaction().replace(R.id.main_container, fragment, "MAP_FRAGMENT").commit();
+        }
     }
 
     @Override
@@ -237,6 +246,12 @@ public class MainActivity extends AppCompatActivity
                 }
 
             }
+        }
+    }
+    public void onRequestListItemPostionChange(){
+        UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
+        if (myFragment != null && myFragment.isVisible()) {
+            myFragment.updateRequestListItemPostion();
         }
     }
 }

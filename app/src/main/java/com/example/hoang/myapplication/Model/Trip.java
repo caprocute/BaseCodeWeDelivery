@@ -5,12 +5,13 @@ import android.os.Parcelable;
 
 import java.util.Date;
 
-public class Trip implements Parcelable{
+public class Trip implements Parcelable {
     private String id;
     private String driverid;
     private String customerid;
 
-    public Trip(){}
+    public Trip() {
+    }
 
 
     protected Trip(Parcel in) {
@@ -20,10 +21,28 @@ public class Trip implements Parcelable{
         vehicleId = in.readString();
         driverRating = in.readFloat();
         customerRating = in.readFloat();
-        moneySum = in.readLong();
+        moneySum = in.readFloat();
         byte tmpIsUsingLoading = in.readByte();
         isUsingLoading = tmpIsUsingLoading == 0 ? null : tmpIsUsingLoading == 1;
-        distanceSum = in.readInt();
+        distanceSum = in.readFloat();
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(driverid);
+        dest.writeString(customerid);
+        dest.writeString(vehicleId);
+        dest.writeFloat(driverRating);
+        dest.writeFloat(customerRating);
+        dest.writeFloat(moneySum);
+        dest.writeByte((byte) (isUsingLoading == null ? 0 : isUsingLoading ? 1 : 2));
+        dest.writeFloat(distanceSum);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
     public static final Creator<Trip> CREATOR = new Creator<Trip>() {
@@ -105,18 +124,18 @@ public class Trip implements Parcelable{
         this.customerRating = customerRating;
     }
 
-    public long getMoneySum() {
+    public float getMoneySum() {
         return moneySum;
     }
 
-    public void setMoneySum(long moneySum) {
+    public void setMoneySum(float moneySum) {
         this.moneySum = moneySum;
     }
 
     private String vehicleId;
     private float driverRating;
     private float customerRating;
-    private long moneySum;
+    private float moneySum;
 
     public Boolean getUsingLoading() {
         return isUsingLoading;
@@ -127,32 +146,16 @@ public class Trip implements Parcelable{
     }
 
     private Boolean isUsingLoading;
-    public int getDistanceSum() {
+
+    public float getDistanceSum() {
         return distanceSum;
     }
 
-    public void setDistanceSum(int distanceSum) {
+    public void setDistanceSum(float distanceSum) {
         this.distanceSum = distanceSum;
     }
 
-    private int distanceSum;
+    private float distanceSum;
 
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(id);
-        dest.writeString(driverid);
-        dest.writeString(customerid);
-        dest.writeString(vehicleId);
-        dest.writeFloat(driverRating);
-        dest.writeFloat(customerRating);
-        dest.writeLong(moneySum);
-        dest.writeByte((byte) (isUsingLoading == null ? 0 : isUsingLoading ? 1 : 2));
-        dest.writeInt(distanceSum);
-    }
 }

@@ -5,6 +5,9 @@
 
     <group android:checkableBehavior="single">
         <item
+            android:id="@+id/menu_new"
+            android:title="Đơn hàng mới" />
+        <item
             android:id="@+id/menu_wallet"
             android:title="@string/menu_wallet" />
         <item

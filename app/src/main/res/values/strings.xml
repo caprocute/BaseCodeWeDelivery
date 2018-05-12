@@ -49,7 +49,7 @@
     <string name="menu_setting">Cài đặt</string>
     <string name="menu_mailbox">Hòm thư</string>
     <string name="menu_driver">Lái xe cùng Here</string>
-    <string name="menu_policy">Pháp lý</string>
+    <string name="menu_policy">Hỗ trợ</string>
     <string name="menu_contact">Tài xế ưa thích</string>
     <string name="default_info_title">Địa điểm mặc định</string>
     <string name="default_info_snippet">No places found, because location permission is disabled.</string>

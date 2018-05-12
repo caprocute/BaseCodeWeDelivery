@@ -190,6 +190,7 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
         notifyItemChanged(fromPosition);
         notifyItemChanged(toPosition);
         notifyItemMoved(fromPosition, toPosition);
+        ((MainActivity)context).onRequestListItemPostionChange();
         return true;
     }
 

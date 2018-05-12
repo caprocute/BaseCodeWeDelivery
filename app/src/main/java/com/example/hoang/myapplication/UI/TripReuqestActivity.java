@@ -18,13 +18,13 @@ import com.example.hoang.myapplication.R;
 public class TripReuqestActivity extends AppCompatActivity implements View.OnClickListener {
     private CheckBox checLoading;
     private TextView txtTip, txtDistance, txtTripSum;
-    private ImageView imgTipNext, imgTipPre;
+    private ImageView imgTipNext, imgTipPre, imgBack;
     private EditText edtNoteTrip;
     private Button btnSend;
 
     private boolean isLoading = false;
     private int tipCount = 0;
-    long countSum;
+    float countSum;
     Trip trip;
 
     @Override
@@ -40,13 +40,14 @@ public class TripReuqestActivity extends AppCompatActivity implements View.OnCli
         txtDistance = (TextView) findViewById(R.id.txtDistance);
         txtTripSum = (TextView) findViewById(R.id.txtSum);
         imgTipNext = (ImageView) findViewById(R.id.imgTipNext);
+        imgBack = (ImageView) findViewById(R.id.imgBack);
         imgTipPre = (ImageView) findViewById(R.id.imgTipPre);
         edtNoteTrip = (EditText) findViewById(R.id.edtNoteTrip);
         btnSend = (Button) findViewById(R.id.btnSend);
 
         txtDistance.setText((trip.getDistanceSum() / 1000) + " km");
         countSum = trip.getDistanceSum() * 10;
-        txtTripSum.setText(countSum+" đ");
+        txtTripSum.setText(countSum + " đ");
         imgTipPre.setOnClickListener(this);
         imgTipNext.setOnClickListener(this);
         btnSend.setOnClickListener(this);
@@ -80,6 +81,9 @@ public class TripReuqestActivity extends AppCompatActivity implements View.OnCli
                 txtTip.setText(tipCount + "");
                 countSum -= 10000;
                 txtTripSum.setText(countSum + " đ");
+                break;
+            case R.id.imgBack:
+                onBackPressed();
                 break;
             case R.id.btnSend:
                 trip.setMoneySum(countSum);
