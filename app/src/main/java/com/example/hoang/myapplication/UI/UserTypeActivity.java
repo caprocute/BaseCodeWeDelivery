@@ -49,9 +49,6 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_type);
 
-        mView = new CatLoadingView();
-        mView.setCanceledOnTouchOutside(false);
-        mView.show(getSupportFragmentManager(), "Loading your data");
         loginUser = (Button) findViewById(R.id.loginCustomer);
         loginDriver = (Button) findViewById(R.id.loginDriver);
         avatar = (CircleImageView) findViewById(R.id.profileImage);
@@ -71,6 +68,7 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
                     userData = dataSnapshot.getValue(Account.class);
                     loadData(userData);
                 }
+
             }
 
             @Override
@@ -81,7 +79,6 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void loadData(Account account) {
-        mView.dismiss();
         txtName.setText(account.getFirst_name() + " " + account.getLast_name());
         loadAvatar();
     }

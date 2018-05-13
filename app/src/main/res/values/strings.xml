@@ -153,4 +153,5 @@
     <string name="tab_text_1">Thông báo</string>
     <string name="tab_text_2">Khuyến mãi</string>
     <string name="section_format">Hello World from section: %1$d</string>
+    <string name="title_activity_favorite_driver">FavoriteDriverActivity</string>
 </resources>

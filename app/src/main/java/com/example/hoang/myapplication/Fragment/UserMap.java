@@ -720,6 +720,22 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     }
 
+    public void showRequestDriverDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Đặt đơn hàng với tài xế");
+        builder.setMessage("Thực hiện tạo đơn hàng như bình thường. Hệ thống sẽ kết nối bạn với tài xế được yêu cầu. ");
+        builder.setCancelable(false);
+        builder.setNegativeButton("Đã hiểu", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+    }
+
     public void showDoneDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Thông báo");
@@ -1159,6 +1175,20 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 btnRequest.setImageResource(R.drawable.ic_cancel);
                 btnRequest.setVisibility(View.VISIBLE);
                 break;
+            case 3:
+                groupListRequest.setVisibility(View.GONE);
+                groupFindDriver.setVisibility(View.VISIBLE);
+                groupDriverInfor.setVisibility(View.GONE);
+                btnSMS.setVisibility(View.GONE);
+                btnCall.setVisibility(View.GONE);
+                progressBar.setVisibility(View.VISIBLE);
+                txtAdd.setVisibility(View.GONE);
+                txtRemove.setVisibility(View.GONE);
+                txtOptimze.setVisibility(View.GONE);
+                txtStatus.setVisibility(View.VISIBLE);
+                txtStatus.setText("Chúng tôi đang kết nối với tài xế " + mDriver.getmName());
+                btnRequest.setVisibility(View.GONE);
+                break;
         }
     }
 
@@ -1537,7 +1567,14 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         currentTrip = trip;
         putRequest();
         showCountDown();
-        getClosestDriver();
+        if (!isRequestedDriverMode)
+            getClosestDriver();
+        else {
+            driverFound = true;
+            driverFoundID = mDriver.getUserID();
+            setFindDriverUI(3);
+            stopAndWattingDriver(mDriver.getUserID());
+        }
         btnRequest.setImageResource(R.drawable.ic_cancel);
     }
 
@@ -1563,6 +1600,57 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     public void resetRequestStatus() {
         requestTrip = false;
+    }
+
+    private boolean isRequestedDriverMode = false;
+    private Driver mDriver;
+    private ConstraintLayout driverRequestedGroup;
+    private ConstraintLayout vehicleChoiceGroup;
+    private TextView txtDriverRequestedGroup;
+    private ImageView imgDriverRequestedGroup;
+
+    private void getRequestedDriverStatus() {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
+        if (mDriver.getmService().equals("HereBike")) {
+            ref = ref.child(InstanceVariants.CHILD_DRIVER_AVAIABLE).child(InstanceVariants.CHILD_MOTOR_POSTION).child(mDriver.getUserID());
+        } else {
+            ref = ref.child(InstanceVariants.CHILD_DRIVER_AVAIABLE).child(InstanceVariants.CHILD_CAR_POSTION).child(mDriver.getUserID());
+        }
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    txtDriverRequestedGroup.setText("Tài xế đang online");
+                    imgDriverRequestedGroup.setImageDrawable(getActivity().getDrawable(R.drawable.circle_green));
+                } else {
+                    txtDriverRequestedGroup.setText("Tài xế đang offline");
+                    imgDriverRequestedGroup.setImageDrawable(getActivity().getDrawable(R.drawable.circle_red));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+    }
+
+    public void requestWithDriver(Driver driver) {
+        showRequestDriverDialog();
+
+        driverRequestedGroup = (ConstraintLayout) getView().findViewById(R.id.requestedDriverGroup);
+        vehicleChoiceGroup = (ConstraintLayout) getView().findViewById(R.id.vehicleChoiceGroup);
+        txtDriverRequestedGroup = (TextView) getView().findViewById(R.id.txtDriverStatus);
+        imgDriverRequestedGroup = (ImageView) getView().findViewById(R.id.imgDriverStatus);
+
+        vehicleChoiceGroup.setVisibility(View.GONE);
+        driverRequestedGroup.setVisibility(View.VISIBLE);
+
+        isRequestedDriverMode = true;
+        mDriver = driver;
+        getRequestedDriverStatus();
+
     }
 
 }

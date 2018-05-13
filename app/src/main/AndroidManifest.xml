@@ -9,6 +9,7 @@
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -52,7 +53,6 @@
         <activity
             android:name=".UI.RequestActivity"
             android:theme="@style/Base.Theme.AppCompat.Light.DarkActionBar" />
-        <activity android:name=".Fragment.DriverMap" />
         <activity android:name=".Test.DriverLoginActivity" />
         <activity android:name=".Test.CustomerLoginActivity" />
         <activity android:name=".Test.DriverMapActivity" />
@@ -67,7 +67,13 @@
             android:name=".UI.InformationActivity"
             android:label="@string/title_activity_information"
             android:theme="@style/NoActionBar" />
-        <activity android:name=".UI.InformationDetailActivity"></activity>
+        <activity android:name=".UI.InformationDetailActivity" />
+        <activity android:name=".UI.HistoryUsingAcitvity" />
+        <activity
+            android:name=".UI.FavoriteDriverActivity"
+            android:label="@string/title_activity_favorite_driver"
+            android:theme="@style/NoActionBar"
+            android:windowSoftInputMode="stateHidden"></activity>
     </application>
 
 </manifest>

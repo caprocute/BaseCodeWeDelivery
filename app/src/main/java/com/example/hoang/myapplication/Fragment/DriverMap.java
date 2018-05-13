@@ -393,6 +393,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                         Toast.makeText(getActivity(), "Bạn đang trong thời gian tạm khóa. Kích hoạt lại sau " + stopTime + " giây nữa.", Toast.LENGTH_LONG).show();
                     }
                 } else {
+                    disAssignedCustomer();
                     imgStatus.setImageDrawable(getActivity().getDrawable(R.drawable.ic_off));
                     txtStatus.setText("Tạm ngưng");
                     disconnectDriver();
@@ -412,7 +413,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         });
         updateUI(0);
         polylines = new ArrayList<>();
-        getAssignedCustomer();
+
 
     }
 
@@ -438,6 +439,12 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
     private DatabaseReference refAvailable;
     private ValueEventListener valueEventListenerAvaiable;
+
+    private void disAssignedCustomer() {
+        if (refAvailable != null) {
+            refAvailable.removeEventListener(valueEventListenerAvaiable);
+        }
+    }
 
     private void getAssignedCustomer() {
         isDone = false;
@@ -745,6 +752,12 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private void recordRide() {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
+        long time = System.currentTimeMillis();
+        currentTrip.setDriverid(userId);
+        currentTrip.setVehicleId(mDriver.getmCar());
+        currentTrip.setStatus("working");
+        currentTrip.setPickupTime(time);
+
         DatabaseReference driverRef = FirebaseDatabase.getInstance()
                 .getReference()
                 .child(InstanceVariants.CHILD_SHARE_USER)
@@ -768,12 +781,6 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 .child(InstanceVariants.CHILD_TRIPS)
                 .child(currentTrip.getId());
 
-        long time = System.currentTimeMillis();
-
-        currentTrip.setDriverid(userId);
-        currentTrip.setVehicleId(mDriver.getmCar());
-        currentTrip.setStatus("working");
-        currentTrip.setPickupTime(time);
 
         driverRef.child(currentTrip.getId()).setValue(true);
         refTrip.setValue(currentTrip);
@@ -792,6 +799,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         mFusedLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
         currentProgress = 0;
         mMap.setMyLocationEnabled(true);
+        getAssignedCustomer();
     }
 
     private void checkLocationPermission() {

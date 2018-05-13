@@ -26,6 +26,7 @@ import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
 import com.example.hoang.myapplication.Fragment.DriverMap;
 import com.example.hoang.myapplication.Fragment.UserMap;
 import com.example.hoang.myapplication.Model.Account;
+import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.Model.Trip;
 import com.example.hoang.myapplication.R;
@@ -90,6 +91,7 @@ public class MainActivity extends AppCompatActivity
                 if (dataSnapshot.exists()) {
                     userData = dataSnapshot.getValue(Account.class);
                     loadData(userData);
+                    checkIfRequesredDriver();
                 }
             }
 
@@ -98,8 +100,19 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-    }
 
+
+    }
+    private void checkIfRequesredDriver(){
+        Intent intent = getIntent();
+        Driver driver = (Driver) intent.getParcelableExtra("package");
+        if (driver != null) {
+            UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
+            if (myFragment != null && myFragment.isVisible()) {
+                myFragment.requestWithDriver(driver);
+            }
+        }
+    }
     public void resetMap() {
         Fragment fragment = fragmentManager.findFragmentByTag("MAP_FRAGMENT");
         if (fragment != null)
@@ -163,6 +176,10 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.menu_noti:
                 intent = new Intent(MainActivity.this, InformationActivity.class);
+                startActivity(intent);
+                break;
+            case R.id.menu_contact:
+                intent = new Intent(MainActivity.this, FavoriteDriverActivity.class);
                 startActivity(intent);
                 break;
         }

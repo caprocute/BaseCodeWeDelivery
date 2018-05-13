@@ -1,6 +1,9 @@
 package com.example.hoang.myapplication.Model;
 
-public class Driver {
+import android.os.Parcel;
+import android.os.Parcelable;
+
+public class Driver implements Parcelable {
     private float rating;
     private int trip_count;
     private int trip_accept;
@@ -8,6 +11,35 @@ public class Driver {
     private int status;
     private String userID;
     private String mName;
+
+    public Driver() {
+    }
+
+    protected Driver(Parcel in) {
+        rating = in.readFloat();
+        trip_count = in.readInt();
+        trip_accept = in.readInt();
+        trip_cancel = in.readInt();
+        status = in.readInt();
+        userID = in.readString();
+        mName = in.readString();
+        mPhone = in.readString();
+        mCar = in.readString();
+        mService = in.readString();
+        mProfileImageUrl = in.readString();
+    }
+
+    public static final Creator<Driver> CREATOR = new Creator<Driver>() {
+        @Override
+        public Driver createFromParcel(Parcel in) {
+            return new Driver(in);
+        }
+
+        @Override
+        public Driver[] newArray(int size) {
+            return new Driver[size];
+        }
+    };
 
     public float getRating() {
         return rating;
@@ -110,5 +142,25 @@ public class Driver {
         if (this.mService == null || this.mService.isEmpty()) return false;
         if (this.userID == null || this.userID.isEmpty()) return false;
         return true;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeFloat(rating);
+        dest.writeInt(trip_count);
+        dest.writeInt(trip_accept);
+        dest.writeInt(trip_cancel);
+        dest.writeInt(status);
+        dest.writeString(userID);
+        dest.writeString(mName);
+        dest.writeString(mPhone);
+        dest.writeString(mCar);
+        dest.writeString(mService);
+        dest.writeString(mProfileImageUrl);
     }
 }
