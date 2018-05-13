@@ -62,6 +62,12 @@
         <activity android:name=".Test.HistoryActivity" />
         <activity android:name=".Test.HistorySingleActivity" />
         <activity android:name=".UI.TripReuqestActivity" />
+        <activity android:name=".UI.HelpActivity" />
+        <activity
+            android:name=".UI.InformationActivity"
+            android:label="@string/title_activity_information"
+            android:theme="@style/NoActionBar" />
+        <activity android:name=".UI.InformationDetailActivity"></activity>
     </application>
 
 </manifest>

@@ -3,7 +3,6 @@ package com.example.hoang.myapplication.Fragment;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,9 +10,6 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.GeomagneticField;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -92,6 +88,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -323,7 +320,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private long stopTime;
     private FloatingActionButton btnCall, btnSms, btnCancel;
     private ImageView btnListRequest, btnDirection;
-    private TextView txtCustomerName, txtTripCost;
+    private TextView txtCustomerName, txtTripCost, txtDrivingType, txtIsLoading;
     private Button btnDriverTrip;
     private SeekBar seekStatus;
 
@@ -343,16 +340,18 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         imgStatus = (ImageView) getView().findViewById(R.id.imgStatus);
         txtWhatHappend = (TextView) getView().findViewById(R.id.txtWhatHappen);
         txtWallet = (TextView) getView().findViewById(R.id.txtWallet);
-        txtDriverType = (TextView) getView().findViewById(R.id.txtDriverType);
+        txtDriverType = (TextView) getView().findViewById(R.id.txtDriverType2);
         txtAcceptRatin = (TextView) getView().findViewById(R.id.txtAcceptRating);
         txtRating = (TextView) getView().findViewById(R.id.txtRating);
         txtCancelRating = (TextView) getView().findViewById(R.id.txtCancelRate);
         txtStatus = (TextView) getView().findViewById(R.id.txtStatus);
+        txtDrivingType = (TextView) getView().findViewById(R.id.txtDrivingType);
+        txtIsLoading = (TextView) getView().findViewById(R.id.txtIsLoadingEnable);
         group1 = (ConstraintLayout) getView().findViewById(R.id.groupDriverMap1);
 
         // group 2 accept screen
         txtMoney = (TextView) getView().findViewById(R.id.txtMoney);
-        txtDriverTypeAccept = (TextView) getView().findViewById(R.id.txtDriverType);
+        txtDriverTypeAccept = (TextView) getView().findViewById(R.id.txtDriverType2);
         txtTimeRemain = (TextView) getView().findViewById(R.id.txtTimeRemain);
         listTrip = (RecyclerView) getView().findViewById(R.id.listTrip);
         btnAccept = (Button) getView().findViewById(R.id.btnAccept);
@@ -441,6 +440,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private ValueEventListener valueEventListenerAvaiable;
 
     private void getAssignedCustomer() {
+        isDone = false;
         driverReject = false;
         String driverId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER);
@@ -458,7 +458,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                     showAcceptScreen();
                 } else {
                     Log.d(TAG, "onDataChange: data not exit");
-                    if (tripId != null && !tripId.isEmpty() && !driverReject) {
+                    if (tripId != null && !tripId.isEmpty() && !driverReject && !isDone) {
                         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                         builder.setTitle("Thông báo!");
                         builder.setMessage("Khách hàng đã hủy đơn hàng này. ");
@@ -506,6 +506,12 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     currentTrip = dataSnapshot.getValue(Trip.class);
+                    String status = currentTrip.getDrivingMode();
+                    if (currentTrip.getExpressMode()) status += " Express";
+                    else status += " Economy";
+                    txtMoney.setText(currentTrip.getMoneySum() + " VNĐ");
+                    if (currentTrip.getUsingLoading()) txtIsLoading.setVisibility(View.VISIBLE);
+                    else txtIsLoading.setVisibility(View.GONE);
                 }
             }
 
@@ -704,26 +710,81 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         }
     }
 
+    private boolean isDone = false;
+
+    private void doneRide() {
+        updateUI(0);
+        erasePolylines();
+        isDone = true;
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(userId).child("customerRequest").child("status");
+        driverRef.setValue("done");
+
+        DatabaseReference driverRef2 = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(userId).child("customerRequest");
+        driverRef2.removeValue();
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+        GeoFire geoFire = new GeoFire(ref);
+        geoFire.removeLocation(tripId);
+        tripId = "";
+        rideDistance = 0;
+
+        if (pickupMarker != null) {
+            pickupMarker.remove();
+        }
+        for (int i = 0; i < markerList.size(); i++) {
+            markerList.get(i).remove();
+        }
+        if (assignedCustomerPickupLocationRefListener != null) {
+            assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);
+        }
+    }
+
     private void recordRide() {
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userId).child("history");
-        DatabaseReference customerRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Customers").child(tripId).child("history");
-        DatabaseReference historyRef = FirebaseDatabase.getInstance().getReference().child("history");
-        String requestId = historyRef.push().getKey();
-        driverRef.child(requestId).setValue(true);
-        customerRef.child(requestId).setValue(true);
 
-        HashMap map = new HashMap();
-        map.put("driver", userId);
-        map.put("customer", tripId);
-        map.put("rating", 0);
-        map.put("destination", destination);
-        map.put("location/from/lat", pickupLatLng.latitude);
-        map.put("location/from/lng", pickupLatLng.longitude);
-        map.put("location/to/lat", destinationLatLng.latitude);
-        map.put("location/to/lng", destinationLatLng.longitude);
-        map.put("distance", rideDistance);
-        historyRef.child(requestId).updateChildren(map);
+        DatabaseReference driverRef = FirebaseDatabase.getInstance()
+                .getReference()
+                .child(InstanceVariants.CHILD_SHARE_USER)
+                .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS)
+                .child(userId).child("working");
+
+        DatabaseReference driverRefHistory = FirebaseDatabase.getInstance()
+                .getReference()
+                .child(InstanceVariants.CHILD_HISTORY)
+                .child(userId);
+        driverRefHistory.child(currentTrip.getId()).setValue(true);
+
+        DatabaseReference customerRefHistory = FirebaseDatabase.getInstance()
+                .getReference()
+                .child(InstanceVariants.CHILD_HISTORY)
+                .child(currentTrip.getCustomerid());
+        customerRefHistory.child(currentTrip.getId()).setValue(true);
+
+        DatabaseReference refTrip = FirebaseDatabase.getInstance()
+                .getReference()
+                .child(InstanceVariants.CHILD_TRIPS)
+                .child(currentTrip.getId());
+
+        long time = System.currentTimeMillis();
+
+        currentTrip.setDriverid(userId);
+        currentTrip.setVehicleId(mDriver.getmCar());
+        currentTrip.setStatus("working");
+        currentTrip.setPickupTime(time);
+
+        driverRef.child(currentTrip.getId()).setValue(true);
+        refTrip.setValue(currentTrip);
+
+        for (Request item : tripRequests) {
+            item.setStatus("working");
+            DatabaseReference refRequest = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST);
+            refRequest.child(item.getId()).setValue(item);
+        }
+
+
     }
 
     private void connectDriver() {
@@ -809,6 +870,9 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 sendIntent.setData(Uri.parse("sms:" + currentCustomer.getPhone()));
                 startActivity(sendIntent);
                 break;
+            case R.id.btnDriverTrip:
+                showPickUpAlertDialog();
+                break;
 
         }
 
@@ -864,7 +928,31 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
     }
 
+    public void showPickUpAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Chú ý!");
+        builder.setMessage("Chỉ xác nhận khi bạn đã nhận hàng từ khách hàng và tải hàng lên xe");
+        builder.setCancelable(false);
+        builder.setPositiveButton("Xác nhận", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                recordRide();
+                doneRide();
+            }
+        });
+        builder.setNegativeButton("Hủy bỏ", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+    }
+
     private void declineRequest() {
+        if (countDownTimer != null) countDownTimer.cancel();
         isAccept = false;
         driverReject = true;
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();

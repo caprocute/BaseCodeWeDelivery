@@ -26,6 +26,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.roger.catloadinglibrary.CatLoadingView;
 
 import java.io.File;
 
@@ -42,13 +43,15 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
     private StorageReference mStorageRef;
     private File localFile;
     public static String LOGIN_MODE = "LOGIN_MODE";
-
+    private CatLoadingView mView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_type);
 
-
+        mView = new CatLoadingView();
+        mView.setCanceledOnTouchOutside(false);
+        mView.show(getSupportFragmentManager(), "Loading your data");
         loginUser = (Button) findViewById(R.id.loginCustomer);
         loginDriver = (Button) findViewById(R.id.loginDriver);
         avatar = (CircleImageView) findViewById(R.id.profileImage);
@@ -78,6 +81,7 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void loadData(Account account) {
+        mView.dismiss();
         txtName.setText(account.getFirst_name() + " " + account.getLast_name());
         loadAvatar();
     }

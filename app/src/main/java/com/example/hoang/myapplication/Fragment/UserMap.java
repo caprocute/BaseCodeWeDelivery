@@ -649,6 +649,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                     markerList.clear();
                     setVehicleMode(true);
                     Log.d(TAG, "onClick: getNearestDriver");
+                    currentTrip.setDrivingMode("HereBike");
                     getNearestDriver();
                 } else {
                     Toast.makeText(getActivity(), "Chức năng này không hoạt động khi bạn đang tạo đơn hàng", Toast.LENGTH_SHORT);
@@ -660,6 +661,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                     for (Marker marker : markerList) {
                         marker.remove();
                     }
+                    currentTrip.setDrivingMode("HereCar");
                     markerList.clear();
                     setVehicleMode(false);
                     getNearestDriver();
@@ -708,6 +710,22 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             }
         });
         builder.setNegativeButton("Hủy bỏ", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+    }
+
+    public void showDoneDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Thông báo");
+        builder.setMessage("Đơn hàng của bạn đã được tài xế tiếp nhận xử lý. Vui lòng theo dõi hoạt động của đơn hàng trong mục Lịch sử ");
+        builder.setCancelable(false);
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
@@ -795,6 +813,9 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         currentTrip = new Trip();
+        if (vehicleMode) currentTrip.setDrivingMode("HereBike");
+        else
+            currentTrip.setDrivingMode("HereCar");
         currentTrip.setCustomerid(FirebaseAuth.getInstance().getCurrentUser().getUid());
         currentTrip.setDistanceSum(tripDistance);
         Intent intent = new Intent(getActivity(), TripReuqestActivity.class);
@@ -961,6 +982,10 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                         driverFound = false;
                         /*driverRejectRef.removeValue();*/
                         getClosestDriver();
+                    } else if (check.equals("done")) {
+                        showDoneDialog();
+                        endRide();
+                        ((MainActivity) getActivity()).resetMap();
                     }
                 }
             }
@@ -1190,6 +1215,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
 
     private List<Marker> markerList = new ArrayList<>();
+    private GeoQueryEventListener mGeoQuerry;
 
     private void getNearestDriver() {
         if (isAdded()) {
@@ -1203,49 +1229,54 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             }
             /*setFindDriverUI(2);*/
 
+            if (geoQuery != null) {
+                geoQuery.removeAllListeners();
+            }
             GeoFire geoFire = new GeoFire(driverLocation);
             geoQuery = geoFire.queryAtLocation(new GeoLocation(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), 10);
-            geoQuery.removeAllListeners();
 
-            geoQuery.addGeoQueryEventListener(new GeoQueryEventListener() {
+
+            mGeoQuerry = new GeoQueryEventListener() {
                 @Override
                 public void onKeyEntered(String key, GeoLocation location) {
                     //TODO QUERY NEAR DRIVER
 
-                    for (Marker marker : markerList) {
-                        if (marker.getTag() != null && marker.getTag().equals(key)) return;
-                    }
-                    int height = 150;
-                    int width = 75;
-                    BitmapDrawable bitmapdraw = new BitmapDrawable();
-                    if (!vehicleMode) {
-                        bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_car_marker);
+                    if (isAdded()) {
+                        for (Marker marker : markerList) {
+                            if (marker.getTag() != null && marker.getTag().equals(key)) return;
+                        }
+                        int height = 150;
+                        int width = 75;
+                        BitmapDrawable bitmapdraw = new BitmapDrawable();
+                        if (!vehicleMode) {
+                            bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_car_marker);
 
-                    } else {
-                        bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_moto_marker);
-                    }
-                    Bitmap b = bitmapdraw.getBitmap();
-                    Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
-                    Random random = new Random();
-                    LatLng driverLocation = new LatLng(location.latitude, location.longitude);
-                    final Marker marker = mMap.addMarker(new MarkerOptions().position(driverLocation).flat(true));
-                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_BEARING).child(key);
-                    databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            if (dataSnapshot.exists()) {
-                                marker.setRotation(Float.valueOf(dataSnapshot.getValue().toString()));
+                        } else {
+                            bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.ic_moto_marker);
+                        }
+                        Bitmap b = bitmapdraw.getBitmap();
+                        Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
+                        Random random = new Random();
+                        LatLng driverLocation = new LatLng(location.latitude, location.longitude);
+                        final Marker marker = mMap.addMarker(new MarkerOptions().position(driverLocation).flat(true));
+                        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_BEARING).child(key);
+                        databaseReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                if (dataSnapshot.exists()) {
+                                    marker.setRotation(Float.valueOf(dataSnapshot.getValue().toString()));
+                                }
                             }
-                        }
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
 
-                        }
-                    });
-                    marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
-                    marker.setTag(key);
-                    markerList.add(marker);
+                            }
+                        });
+                        marker.setIcon(BitmapDescriptorFactory.fromBitmap(smallMarker));
+                        marker.setTag(key);
+                        markerList.add(marker);
+                    }
                 }
 
                 @Override
@@ -1291,7 +1322,8 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 public void onGeoQueryError(DatabaseError error) {
 
                 }
-            });
+            };
+            geoQuery.addGeoQueryEventListener(mGeoQuerry);
         }
     }
 

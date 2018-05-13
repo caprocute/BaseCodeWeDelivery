@@ -9,15 +9,20 @@ public class Trip implements Parcelable {
     private String id;
     private String driverid;
     private String customerid;
-
-    public Trip() {
-    }
-
+    private String drivingMode;
+    private Boolean isExpressMode;
+    private String status;
 
     protected Trip(Parcel in) {
         id = in.readString();
         driverid = in.readString();
         customerid = in.readString();
+        drivingMode = in.readString();
+        byte tmpIsExpressMode = in.readByte();
+        isExpressMode = tmpIsExpressMode == 0 ? null : tmpIsExpressMode == 1;
+        status = in.readString();
+        pickupTime = in.readLong();
+        droffOffTime = in.readLong();
         vehicleId = in.readString();
         driverRating = in.readFloat();
         customerRating = in.readFloat();
@@ -32,6 +37,11 @@ public class Trip implements Parcelable {
         dest.writeString(id);
         dest.writeString(driverid);
         dest.writeString(customerid);
+        dest.writeString(drivingMode);
+        dest.writeByte((byte) (isExpressMode == null ? 0 : isExpressMode ? 1 : 2));
+        dest.writeString(status);
+        dest.writeLong(pickupTime);
+        dest.writeLong(droffOffTime);
         dest.writeString(vehicleId);
         dest.writeFloat(driverRating);
         dest.writeFloat(customerRating);
@@ -57,6 +67,28 @@ public class Trip implements Parcelable {
         }
     };
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Boolean getExpressMode() {
+        return isExpressMode;
+    }
+
+    public void setExpressMode(Boolean expressMode) {
+        isExpressMode = expressMode;
+    }
+
+    public Trip() {
+        this.drivingMode = "HereBike";
+        this.isExpressMode = false;
+        this.isUsingLoading = false;
+    }
+
     public String getCustomerid() {
         return customerid;
     }
@@ -65,8 +97,8 @@ public class Trip implements Parcelable {
         this.customerid = customerid;
     }
 
-    private Date pickupTime;
-    private Date droffOffTime;
+    private long pickupTime;
+    private long droffOffTime;
 
     public String getId() {
         return id;
@@ -84,19 +116,19 @@ public class Trip implements Parcelable {
         this.driverid = driverid;
     }
 
-    public Date getPickupTime() {
+    public long getPickupTime() {
         return pickupTime;
     }
 
-    public void setPickupTime(Date pickupTime) {
+    public void setPickupTime(long pickupTime) {
         this.pickupTime = pickupTime;
     }
 
-    public Date getDroffOffTime() {
+    public long getDroffOffTime() {
         return droffOffTime;
     }
 
-    public void setDroffOffTime(Date droffOffTime) {
+    public void setDroffOffTime(long droffOffTime) {
         this.droffOffTime = droffOffTime;
     }
 
@@ -157,5 +189,13 @@ public class Trip implements Parcelable {
 
     private float distanceSum;
 
+
+    public String getDrivingMode() {
+        return drivingMode;
+    }
+
+    public void setDrivingMode(String drivingMode) {
+        this.drivingMode = drivingMode;
+    }
 
 }

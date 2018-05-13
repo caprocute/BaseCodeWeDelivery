@@ -7,13 +7,16 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Date;
 
+/**
+ *
+ */
 public class Request implements Parcelable {
     private String id;
-    private String destinationName;
 
     protected Request(Parcel in) {
         id = in.readString();
         destinationName = in.readString();
+        status = in.readString();
         tripID = in.readString();
         receiverName = in.readString();
         receiverNumber = in.readString();
@@ -33,6 +36,17 @@ public class Request implements Parcelable {
             return new Request[size];
         }
     };
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    private String destinationName;
+    private String status;
 
     public String getDestinationName() {
         return destinationName;
@@ -111,12 +125,13 @@ public class Request implements Parcelable {
     }
 
     public Request() {
+        this.status = "working";
     }
 
     public Request(String id,
                    String tripID,
                    String receiverName,
-                   String receiverNumber, LatLng destination,String destinationName,
+                   String receiverNumber, LatLng destination, String destinationName,
                    String note,
                    long money,
                    Date timeDrop) {
@@ -124,11 +139,12 @@ public class Request implements Parcelable {
         this.tripID = tripID;
         this.receiverName = receiverName;
         this.receiverNumber = receiverNumber;
-        this.destinationName=destinationName;
+        this.destinationName = destinationName;
         this.destination = destination;
         this.note = note;
         this.money = money;
         this.timeDrop = timeDrop;
+        this.status = "working";
 
     }
 
@@ -136,23 +152,6 @@ public class Request implements Parcelable {
     private String note;
     private long money;
     private Date timeDrop;
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(id);
-        dest.writeString(destinationName);
-        dest.writeString(tripID);
-        dest.writeString(receiverName);
-        dest.writeString(receiverNumber);
-        dest.writeParcelable(destination, flags);
-        dest.writeString(note);
-        dest.writeLong(money);
-    }
 
     public boolean isRequestFilled() {
         if (this.receiverName == null || this.receiverName.isEmpty()) return false;
@@ -174,5 +173,23 @@ public class Request implements Parcelable {
         if (this.receiverNumber == null || this.receiverNumber.isEmpty()) return false;
         if (this.destination == null) return false;
         return true;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(destinationName);
+        dest.writeString(status);
+        dest.writeString(tripID);
+        dest.writeString(receiverName);
+        dest.writeString(receiverNumber);
+        dest.writeParcelable(destination, flags);
+        dest.writeString(note);
+        dest.writeLong(money);
     }
 }

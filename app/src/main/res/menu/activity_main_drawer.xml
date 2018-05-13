@@ -27,11 +27,8 @@
     <item android:title="">
         <menu>
             <item
-                android:id="@+id/nav_share"
-                android:title="@string/menu_share" />
-            <item
-                android:id="@+id/nav_send"
-                android:title="@string/menu_driver" />
+                android:id="@+id/menu_logout"
+                android:title="Đăng xuất" />
             <item
                 android:id="@+id/menu_policy"
                 android:title="@string/menu_policy" />

@@ -1,9 +1,11 @@
 package com.example.hoang.myapplication.UI;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -148,26 +150,22 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
-    /*    if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else*/
-        if (id == R.id.menu_policy) {
-            mAuth.signOut();
-            Intent intent = new Intent(MainActivity.this, LauncherActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            finish();
-            startActivity(intent);
+        switch (id) {
+            case R.id.menu_logout:
+                showAlertDialog();
+                break;
+            case R.id.menu_new:
+                resetMap();
+                break;
+            case R.id.menu_policy:
+                Intent intent = new Intent(MainActivity.this, HelpActivity.class);
+                startActivity(intent);
+                break;
+            case R.id.menu_noti:
+                intent = new Intent(MainActivity.this, InformationActivity.class);
+                startActivity(intent);
+                break;
         }
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -248,10 +246,37 @@ public class MainActivity extends AppCompatActivity
             }
         }
     }
-    public void onRequestListItemPostionChange(){
+
+    public void onRequestListItemPostionChange() {
         UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
         if (myFragment != null && myFragment.isVisible()) {
             myFragment.updateRequestListItemPostion();
         }
+    }
+
+    public void showAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Chú ý!");
+        builder.setMessage("Đăng xuất khỏi tài khoản hiện tại? ");
+        builder.setCancelable(false);
+        builder.setPositiveButton("Đổng ý", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                mAuth.signOut();
+                Intent intent = new Intent(MainActivity.this, LauncherActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                finish();
+                startActivity(intent);
+            }
+        });
+        builder.setNegativeButton("Hủy bỏ", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
     }
 }
