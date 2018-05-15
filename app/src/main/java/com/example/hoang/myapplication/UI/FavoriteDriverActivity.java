@@ -63,6 +63,15 @@ public class FavoriteDriverActivity extends AppCompatActivity {
         setContentView(R.layout.activity_favorite_driver);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
+
         listView = (ListView) findViewById(R.id.lst_favotite_driver);
         edt = (EditText) findViewById(R.id.editPhone);
         img = (ImageView) findViewById(R.id.imgfind);

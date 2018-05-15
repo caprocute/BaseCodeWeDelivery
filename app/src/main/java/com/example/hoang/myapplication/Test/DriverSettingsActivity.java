@@ -159,6 +159,7 @@ public class DriverSettingsActivity extends AppCompatActivity {
         driver.setmName(mNameField.getText().toString());
         driver.setmPhone(mPhoneField.getText().toString());
         driver.setmCar(mCarField.getText().toString());
+        driver.setUserID(userID);
         if (isFirst) driver.setmProfileImageUrl(account.getAvartar());
         int selectId = mRadioGroup.getCheckedRadioButtonId();
 

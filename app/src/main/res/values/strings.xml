@@ -1,5 +1,12 @@
 <resources>
     <!-- main source-->
+    <string-array name="array_name">
+        <item>Tất cả</item>
+        <item>Đang thực hiện</item>
+        <item>Đã hoàn thành</item>
+        <item>Bị hủy</item>
+    </string-array>
+
     <string name="about_us">Về chúng tôi</string>
     <string name="quick_help">Trợ giúp nhanh</string>
     <string name="mail_box">Hòm thư góp ý</string>
@@ -154,4 +161,6 @@
     <string name="tab_text_2">Khuyến mãi</string>
     <string name="section_format">Hello World from section: %1$d</string>
     <string name="title_activity_favorite_driver">FavoriteDriverActivity</string>
+    <string name="title_activity_history_user">HistoryUserActivity</string>
+    <string name="title_activity_history_detail">HistoryDetail</string>
 </resources>

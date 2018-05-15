@@ -3,36 +3,49 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
+    <group>
         <item
             android:id="@+id/menu_new"
+            android:icon="@drawable/ic_new"
             android:title="Đơn hàng mới" />
         <item
             android:id="@+id/menu_wallet"
+            android:icon="@drawable/ic_wallet"
+
             android:title="@string/menu_wallet" />
         <item
             android:id="@+id/menu_history"
+            android:icon="@drawable/ic_history"
+
             android:title="@string/menu_history" />
         <item
             android:id="@+id/menu_contact"
+            android:icon="@drawable/ic_favorite"
+
             android:title="@string/menu_contact" />
         <item
             android:id="@+id/menu_noti"
+            android:icon="@drawable/ic_noti"
+
             android:title="@string/menu_noti" />
         <item
             android:id="@+id/menu_setting"
+            android:icon="@drawable/ic_mailbox"
+
             android:title="@string/menu_mailbox" />
     </group>
 
     <item android:title="">
-        <menu>
-            <item
-                android:id="@+id/menu_logout"
-                android:title="Đăng xuất" />
-            <item
-                android:id="@+id/menu_policy"
-                android:title="@string/menu_policy" />
-        </menu>
+        <item
+            android:id="@+id/menu_logout"
+
+            android:icon="@drawable/ic_logout"
+            android:title="Đăng xuất" />
+        <item
+            android:id="@+id/menu_policy"
+
+            android:icon="@drawable/ic_help"
+            android:title="@string/menu_policy" />
     </item>
 
 </menu>

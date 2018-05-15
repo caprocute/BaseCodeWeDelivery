@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".UI.FavoriteDriverActivity">
+    tools:context=".UI.HistoryUserActivity">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -12,22 +12,19 @@
         android:background="@color/appColor"
         android:theme="@style/NoActionBar.AppBarOverlay">
 
-        <android.support.constraint.ConstraintLayout
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize">
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            android:backgroundTint="@color/appColor"
+            app:popupTheme="@style/NoActionBar.PopupOverlay"
+            app:title="Lịch sử đặt xe" />
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
-                android:backgroundTint="@color/appColor"
-                app:popupTheme="@style/NoActionBar.PopupOverlay"
-                app:title="" />
 
-        </android.support.constraint.ConstraintLayout>
     </android.support.design.widget.AppBarLayout>
 
-    <include layout="@layout/content_favorite_driver" />
+    <include layout="@layout/content_history_user" />
+
 
 </android.support.design.widget.CoordinatorLayout>

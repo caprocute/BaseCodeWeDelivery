@@ -502,6 +502,8 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private void showAcceptScreen() {
         if (tripId == null || tripId.isEmpty()) return;
         Log.d("hieuhk", "showAcceptScreen: ");
+        showCountDown();
+
         isAccept = false;
         currentProgress = 1;
         updateUI(1);
@@ -527,7 +529,6 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
             }
         });
-
         Query query = reference.child(InstanceVariants.CHILD_REQUEST).orderByChild("tripID").equalTo(tripId);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -551,6 +552,8 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                             request.setReceiverName(driverMap.get("receiverName").toString());
                         if (driverMap.get("receiverNumber") != null)
                             request.setReceiverNumber(driverMap.get("receiverNumber").toString());
+                        if (driverMap.get("uri") != null)
+                            request.setUri(driverMap.get("uri").toString());
                         if (driverMap.get("destination") != null) {
                             Map<String, Object> destination = (Map<String, Object>) driverMap.get("destination");
                           /*  Map<String, Map<String, String>> stringMapMap = (Map<String, Map<String, String>>) driverMap.get("destination");
@@ -566,7 +569,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                     adapter = new RecyclerListAdapter(getActivity(), null, tripRequests);
                     listTrip.setAdapter(adapter);
                     listTrip.setLayoutManager(new LinearLayoutManager(getActivity()));
-                    showCountDown();
+
                 } else
                     Toast.makeText(getActivity(), "Không tìm thấy dữ liệu chuyến đi!", Toast.LENGTH_SHORT).show();
             }
@@ -587,6 +590,10 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             public void onTick(long millisUntilFinished) {
                 txtTimeRemain.setText(millisUntilFinished / 1000 + "");
                 Log.d(TAG, "onTick: " + millisUntilFinished);
+                if (isAccept) {
+                    Log.d(TAG, "onTick: stop at " + millisUntilFinished);
+                    cancel();
+                }
                 //here you can have your logic to set text to edittext
             }
 
@@ -790,8 +797,6 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             DatabaseReference refRequest = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST);
             refRequest.child(item.getId()).setValue(item);
         }
-
-
     }
 
     private void connectDriver() {

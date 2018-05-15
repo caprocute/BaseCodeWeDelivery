@@ -30,6 +30,7 @@ import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.Model.Trip;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.Test.DriverSettingsActivity;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setItemIconTintList(null);
         View header = navigationView.getHeaderView(0);
         profileImage = (CircleImageView) header.findViewById(R.id.profileImage);
         txtHeaderName = (TextView) header.findViewById(R.id.txtheader_name);
@@ -100,10 +102,20 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-
+        hideItem();
 
     }
-    private void checkIfRequesredDriver(){
+
+    private void hideItem() {
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        Menu nav_Menu = navigationView.getMenu();
+        if (!loginMode) {
+            nav_Menu.findItem(R.id.menu_new).setVisible(false);
+            nav_Menu.findItem(R.id.menu_contact).setVisible(false);
+        }
+    }
+
+    private void checkIfRequesredDriver() {
         Intent intent = getIntent();
         Driver driver = (Driver) intent.getParcelableExtra("package");
         if (driver != null) {
@@ -113,6 +125,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
     }
+
     public void resetMap() {
         Fragment fragment = fragmentManager.findFragmentByTag("MAP_FRAGMENT");
         if (fragment != null)
@@ -182,6 +195,16 @@ public class MainActivity extends AppCompatActivity
                 intent = new Intent(MainActivity.this, FavoriteDriverActivity.class);
                 startActivity(intent);
                 break;
+            case R.id.menu_history:
+                intent = new Intent(MainActivity.this, HistoryUserActivity.class);
+                startActivity(intent);
+                break;
+            case R.id.menu_wallet:
+                Toast.makeText(MainActivity.this, "Chức năng này sẽ được cập nhật trong các phiên bản tới", Toast.LENGTH_SHORT).show();
+                break;
+            case R.id.menu_setting:
+                Toast.makeText(MainActivity.this, "Chức năng này sẽ được cập nhật trong các phiên bản tới", Toast.LENGTH_SHORT).show();
+                break;
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -206,13 +229,22 @@ public class MainActivity extends AppCompatActivity
     public void onClick(final View v) {
         switch (v.getId()) {
             case R.id.profileImage:
-                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-                drawer.closeDrawer(GravityCompat.START);
-                Intent intent = new Intent(MainActivity.this, PersonalActivity.class);
-                startActivity(intent);
+                if (loginMode) {
+                    DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+                    drawer.closeDrawer(GravityCompat.START);
+                    Intent intent = new Intent(MainActivity.this, PersonalActivity.class);
+                    startActivity(intent);
+                } else {
+                    DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+                    drawer.closeDrawer(GravityCompat.START);
+                    Intent intent = new Intent(MainActivity.this, DriverSettingsActivity.class);
+                    startActivity(intent);
+                }
+
                 break;
 
         }
+
     }
 
     @Override

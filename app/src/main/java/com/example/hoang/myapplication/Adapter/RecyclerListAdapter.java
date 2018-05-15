@@ -3,8 +3,12 @@ package com.example.hoang.myapplication.Adapter;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.view.MotionEventCompat;
 import android.support.v7.widget.RecyclerView;
 import android.telephony.PhoneNumberUtils;
@@ -14,6 +18,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -24,10 +29,23 @@ import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.R;
 import com.example.hoang.myapplication.UI.MainActivity;
 import com.example.hoang.myapplication.UI.RequestActivity;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import org.angmarch.views.NiceSpinner;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapter.ItemViewHolder>
         implements ItemTouchHelperAdapter {
@@ -115,27 +133,50 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
         }
     }
 
+    public Dialog getcurrentDialog() {
+        if (dialog == null) return null;
+        return dialog;
+    }
+
+    public View getcurrentDialogView() {
+        if (layout == null) return null;
+        return layout;
+    }
+
+    private Dialog dialog;
+    private View layout;
+    private Boolean isModImage;
+    List<String> dataset = new LinkedList<>(Arrays.asList("Đồ nội thất","Hàng điện tử","Vật liệu xây dựng","Gói hàng nhỏ","Gói hàng lớn","Đồ ăn","Khác"));
+
     private void showDailog(final Request request, final int postion) {
-        final Dialog dialog = new Dialog(context);
-        Rect displayRectangle = new Rect();
-        Window window = ((MainActivity) context).getWindow();
-        window.getDecorView().getWindowVisibleDisplayFrame(displayRectangle);
+        dialog = new Dialog(context);
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+        lp.copyFrom(dialog.getWindow().getAttributes());
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View layout = inflater.inflate(R.layout.request_dialog, null);
-        layout.setMinimumWidth((int) (displayRectangle.width() * 0.8f));
-        layout.setMinimumHeight((int) (displayRectangle.height() * 0.6f));
+        layout = inflater.inflate(R.layout.request_dialog, null);
 
         Button dialogBack = (Button) layout.findViewById(R.id.btnBack);
         Button dialogConfirm = (Button) layout.findViewById(R.id.btnComfirm);
-        Button dialogUpload = (Button) layout.findViewById(R.id.btnUploadAnh);
 
         final EditText txtReceiverName = (EditText) layout.findViewById(R.id.edtTenNguoiNhan);
         final TextView txtDialogName = (TextView) layout.findViewById(R.id.txtDialogName);
         final EditText txtReceiverPhone = (EditText) layout.findViewById(R.id.edtSoDienThoai);
         final EditText txtNote = (EditText) layout.findViewById(R.id.edtGhiChu);
+        final NiceSpinner niceSpinner = (NiceSpinner) layout.findViewById(R.id.niceSpinner);
+
+
+        niceSpinner.attachDataSource(dataset);
+        if (mItems.get(postion).getUri() != null && !mItems.get(postion).getUri().isEmpty())
+            for (int i = 0; i < dataset.size(); i++) {
+                if (dataset.get(i).equals(mItems.get(postion).getUri()))
+                    niceSpinner.setSelectedIndex(i);
+            }
+
         if (check) {
             dialogConfirm.setVisibility(View.GONE);
-            dialogUpload.setVisibility(View.GONE);
             txtDialogName.setText("Thông tin đơn hàng");
             txtNote.setEnabled(false);
             txtReceiverName.setEnabled(false);
@@ -146,7 +187,6 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
             txtReceiverName.setText(request.getReceiverName());
             txtReceiverPhone.setText(request.getReceiverNumber());
         }
-        ImageView imgPic = (ImageView) layout.findViewById(R.id.imgAnh);
         dialogBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -166,6 +206,7 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
                     mItems.get(postion).setReceiverNumber(txtReceiverPhone.getText().toString());
                     mItems.get(postion).setReceiverName(txtReceiverName.getText().toString());
                     mItems.get(postion).setNote(txtNote.getText().toString());
+                    mItems.get(postion).setUri(dataset.get(niceSpinner.getSelectedIndex()));
                     notifyDataSetChanged();
                     dialog.dismiss();
                 }
@@ -190,7 +231,7 @@ public class RecyclerListAdapter extends RecyclerView.Adapter<RecyclerListAdapte
         notifyItemChanged(fromPosition);
         notifyItemChanged(toPosition);
         notifyItemMoved(fromPosition, toPosition);
-        ((MainActivity)context).onRequestListItemPostionChange();
+        ((MainActivity) context).onRequestListItemPostionChange();
         return true;
     }
 

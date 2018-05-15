@@ -61,17 +61,29 @@
         <activity android:name=".Test.DriverSettingsActivity" />
         <activity android:name=".Test.HistoryActivity" />
         <activity android:name=".Test.HistorySingleActivity" />
-        <activity android:name=".UI.TripReuqestActivity" />
+        <activity
+            android:name=".UI.TripReuqestActivity"
+            android:windowSoftInputMode="stateHidden" />
         <activity android:name=".UI.HelpActivity" />
         <activity
             android:name=".UI.InformationActivity"
             android:label="@string/title_activity_information"
-            android:theme="@style/NoActionBar" />
+            android:theme="@style/NoActionBar"
+            android:windowSoftInputMode="stateHidden" />
         <activity android:name=".UI.InformationDetailActivity" />
-        <activity android:name=".UI.HistoryUsingAcitvity" />
         <activity
             android:name=".UI.FavoriteDriverActivity"
             android:label="@string/title_activity_favorite_driver"
+            android:theme="@style/NoActionBar"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name=".UI.HistoryUserActivity"
+            android:label="@string/title_activity_history_user"
+            android:theme="@style/NoActionBar"
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name=".UI.HistoryDetail"
+            android:label="@string/title_activity_history_detail"
             android:theme="@style/NoActionBar"
             android:windowSoftInputMode="stateHidden"></activity>
     </application>

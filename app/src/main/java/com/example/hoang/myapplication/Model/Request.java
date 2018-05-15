@@ -11,10 +11,9 @@ import java.util.Date;
  *
  */
 public class Request implements Parcelable {
-    private String id;
-
     protected Request(Parcel in) {
         id = in.readString();
+        uri = in.readString();
         destinationName = in.readString();
         status = in.readString();
         tripID = in.readString();
@@ -36,6 +35,17 @@ public class Request implements Parcelable {
             return new Request[size];
         }
     };
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
+    }
+
+    private String id;
+    private String uri;
 
     public String getStatus() {
         return status;
@@ -126,6 +136,7 @@ public class Request implements Parcelable {
 
     public Request() {
         this.status = "working";
+        this.uri = "";
     }
 
     public Request(String id,
@@ -183,6 +194,7 @@ public class Request implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(id);
+        dest.writeString(uri);
         dest.writeString(destinationName);
         dest.writeString(status);
         dest.writeString(tripID);

@@ -206,9 +206,9 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         Request request = new Request("1", "12391209310", "Hoàng Khắc Hiếu",
                 "01636458600", latLng1, "Ga Hà Nội", null, 0, null);
         Request request3 = new Request("1", "12391209310", "Hoàng Khắc Hiếu",
-                "01636458600", null, null, null, 0, null);
+                null, null, null, null, 0, null);
         Request request2 = new Request("1", "12391209310", "Hoàng Khắc Hiếu",
-                "01636458600", latLng2, "113 cầu giấy", null, 0, null);
+                null, latLng2, "113 cầu giấy", null, 0, null);
         tripRequests.add(request3);
         tripRequests.add(request3);
 
@@ -670,6 +670,12 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 }
                 break;
             case R.id.btn_request:
+                if (isRequestedDriverMode) {
+                    if (!requestedDriverStatus) {
+                        Toast.makeText(getActivity(), "Tài xế hiện không online. Vui lòng liên hệ với tài xế", Toast.LENGTH_LONG).show();
+                        break;
+                    }
+                }
                 if (!requestTrip) {
                     if (!requestTrip())
                         Toast.makeText(getActivity(), "Vui lòng cung cấp đầy đủ thông tin", Toast.LENGTH_SHORT).show();
@@ -706,6 +712,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 endRide();
+                recordRide();
                 ((MainActivity) getActivity()).resetMap();
             }
         });
@@ -745,16 +752,61 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 dialogInterface.dismiss();
+                endRide();
+                ((MainActivity) getActivity()).resetMap();
             }
         });
         AlertDialog alertDialog = builder.create();
+        alertDialog.setCanceledOnTouchOutside(false);
         alertDialog.show();
 
     }
 
+    private void recordRide() {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        long time = System.currentTimeMillis();
+        currentTrip.setPickupTime(time);
+        currentTrip.setDriverid(currentDriver.getUserID());
+        currentTrip.setVehicleId(currentDriver.getmCar());
+        currentTrip.setStatus("cancel");
+
+
+        DatabaseReference driverRefHistory = FirebaseDatabase.getInstance()
+                .getReference()
+                .child(InstanceVariants.CHILD_HISTORY)
+                .child(currentDriver.getUserID());
+        driverRefHistory.child(currentTrip.getId()).setValue(true);
+
+        DatabaseReference customerRefHistory = FirebaseDatabase.getInstance()
+                .getReference()
+                .child(InstanceVariants.CHILD_HISTORY)
+                .child(currentTrip.getCustomerid());
+        customerRefHistory.child(currentTrip.getId()).setValue(true);
+
+        DatabaseReference refTrip = FirebaseDatabase.getInstance()
+                .getReference()
+                .child(InstanceVariants.CHILD_TRIPS)
+                .child(currentTrip.getId());
+
+
+        refTrip.setValue(currentTrip);
+
+        for (Request item : tripRequests) {
+            item.setStatus("cancel");
+            DatabaseReference refRequest = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST);
+            refRequest.child(item.getId()).setValue(item);
+        }
+    }
+
     private void endRide() {
         setFindDriverUI(0);
-        if (countDownTimer != null) countDownTimer.cancel();
+
+        if (countDownTimer != null) {
+            Log.d(TAG, "endRide: countDownTimer!=null");
+            countDownTimer.cancel();
+        } else Log.d(TAG, "endRide: countDownTimer=null");
+
 
         requestTrip = false;
         driverFound = false;
@@ -803,7 +855,6 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         optimizeTrip();
-                        sendRequest();
                         dialogInterface.dismiss();
                     }
                 });
@@ -854,6 +905,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         }.start();
     }
 
+    private CountDownTimer countDownCountDriver;
 
     private void getClosestDriver() {
         DatabaseReference rootLocation = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_DRIVER_AVAIABLE);
@@ -870,6 +922,26 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         geoQuery = geoFire.queryAtLocation(new GeoLocation(pickupLocation.latitude, pickupLocation.longitude), radius);
         geoQuery.removeAllListeners();
         countAvaiableDriver = 0;
+
+        countDownCountDriver = new CountDownTimer(10000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                //here you can have your logic to set text to edittext
+                Log.d(TAG, "onTick: count driver still left " + millisUntilFinished + " with " + countAvaiableDriver + " driver");
+            }
+
+            public void onFinish() {
+                if (countAvaiableDriver == 0) {
+                    Log.d(TAG, "onGeoQueryReady: endride");
+
+                    Toast.makeText(getActivity(), "Không thể tìm thấy tài xế phù hợp với bạn", Toast.LENGTH_SHORT).show();
+                    requestTrip = false;
+                    removeRequestAndTrip();
+                    endRide();
+                }
+            }
+
+        }.start();
         mGeoQueryEventListener = new GeoQueryEventListener() {
             @Override
             public void onKeyEntered(String key, GeoLocation location) {
@@ -880,7 +952,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
             @Override
             public void onKeyExited(String key) {
-
+                countAvaiableDriver--;
             }
 
             @Override
@@ -890,31 +962,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
             @Override
             public void onGeoQueryReady() {
-                if (countAvaiableDriver == 0) {
-                    Log.d(TAG, "onGeoQueryReady: endride");
 
-                    Toast.makeText(getActivity(), "Không thể tìm thấy tài xế phù hợp với bạn", Toast.LENGTH_SHORT).show();
-                    requestTrip = false;
-                    removeRequestAndTrip();
-                    endRide();
-                }
-             /*   if (!driverFound && !isWatingDriver) {
-
-                    if (radius <= maxRadius) {
-                        Log.d(TAG, "onGeoQueryReady: " + radius);
-                        radius++;
-                        getClosestDriver();
-                    } else {
-                        //Todo: UPDATE STATUS NOT FOUND DRIVER
-                        Log.d(TAG, "onGeoQueryReady: endride");
-                        setFindDriverUI(0);
-                        radius = 1;
-                        Toast.makeText(getActivity(), "Không thể tìm thấy tài xế phù hợp với bạn", Toast.LENGTH_SHORT).show();
-                        requestTrip = false;
-                        removeRequestAndTrip();
-                        endRide();
-                    }
-                }*/
             }
 
             @Override
@@ -927,6 +975,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     }
 
     private void stopAndWattingDriver(String key) {
+        if (countDownCountDriver != null) countDownCountDriver.cancel();
         if (requestTrip) {
             Log.d(TAG, "onKeyEntered: driverFound " + driverFound);
             Log.d(TAG, "onKeyEntered: isWatingDriver " + isWatingDriver);
@@ -1000,8 +1049,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                         getClosestDriver();
                     } else if (check.equals("done")) {
                         showDoneDialog();
-                        endRide();
-                        ((MainActivity) getActivity()).resetMap();
+
                     }
                 }
             }
@@ -1089,6 +1137,16 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
     private void getDriverInfo() {
         setFindDriverUI(2);
+        if (isRequestedDriverMode) {
+            txtDriverName.setText(mDriver.getmName());
+            txtVehicleDec.setText(mDriver.getmCar());
+            ratingDriver.setRating(mDriver.getRating());
+            imgDriver = (ImageView) getView().findViewById(R.id.imgDriverCustomerMap);
+            if (mDriver.getmProfileImageUrl() != null || !mDriver.getmProfileImageUrl().isEmpty())
+                Glide.with(getActivity()).load(mDriver.getmProfileImageUrl()).into(imgDriver);
+            return;
+        }
+
         DatabaseReference mCustomerDatabase = FirebaseDatabase.getInstance().getReference()
                 .child(InstanceVariants.CHILD_SHARE_USER).child(InstanceVariants.CHILD_WORKING_DRIVER).child(driverFoundID);
         mCustomerDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -1211,28 +1269,6 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             imgBikeMode.setImageDrawable(getActivity().getDrawable(R.drawable.ic_motor_mode_gray));
             imgCarMode.setImageDrawable(getActivity().getDrawable(R.drawable.ic_car_mode));
         }
-    }
-
-
-    private LatLng calculatorMaxdistance(double bearing) {
-        if (mLastKnownLocation == null) return null;
-
-        double lat1rad = degreesToRadians(mLastKnownLocation.getLatitude());    // latitude to radian
-        double long1rad = degreesToRadians(mLastKnownLocation.getLongitude());  // longitude to radian
-
-        double d = 5000;    // distance of radar
-        double R = 6371e3;  // earth R
-        double brng = degreesToRadians(bearing);  //bearing to radian
-
-        double lat2rad = Math.asin(Math.sin(lat1rad) * Math.cos(d / R) + Math.cos(lat1rad) * Math.sin(d / R) * Math.cos(brng));
-        double logn2rad = long1rad + Math.atan2(Math.sin(brng) * Math.sin(d / R) * Math.cos(lat1rad), Math.cos(d / R) - Math.sin(lat1rad) * Math.sin(lat2rad));
-
-        double lat2de = radianToDegree(lat2rad);
-        double long2de = radianToDegree(logn2rad);
-
-        LatLng coordinate = new LatLng(lat2de, long2de);
-
-        return coordinate;
     }
 
     private double degreesToRadians(Double degrees) {
@@ -1472,13 +1508,8 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             Toast.makeText(getActivity(), "Đã tối ưu được " + (tripDistance - maxDistance) + " km", Toast.LENGTH_SHORT).show();
             tripDistance = maxDistance;
             adapter.notifyDataSetChanged();
-           /* recyclerView.removeAllViews();
-            adapter = new RecyclerListAdapter(getActivity(), this, tripRequests);
-
-            ItemTouchHelper.Callback callback = new SimpleItemTouchHelperCallback(adapter);
-            mItemTouchHelper = new ItemTouchHelper(callback);
-            mItemTouchHelper.attachToRecyclerView(recyclerView);*/
             drawMapRoute(tripRequests);
+            sendRequest();
             return;
         }
         Log.d(TAG, "caculatorTripDistance: number" + number);
@@ -1572,6 +1603,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         else {
             driverFound = true;
             driverFoundID = mDriver.getUserID();
+            pickupLocation = tripRequests.get(0).getDestination();
             setFindDriverUI(3);
             stopAndWattingDriver(mDriver.getUserID());
         }
@@ -1583,6 +1615,9 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         DatabaseReference rootRequest = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST);
         currentTripID = rootTrip.push().getKey();
         currentTrip.setId(currentTripID);
+        currentTrip.setStartPointName(tripRequests.get(0).getDestinationName());
+        currentTrip.setDestinationPointNam(tripRequests.get(tripRequests.size() - 1).getDestinationName());
+        currentTrip.setRequestCount(tripRequests.size() - 2);
         rootTrip.child(currentTripID).setValue(currentTrip);
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_CUSTOMER_REQUEST);
 
@@ -1608,6 +1643,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     private ConstraintLayout vehicleChoiceGroup;
     private TextView txtDriverRequestedGroup;
     private ImageView imgDriverRequestedGroup;
+    private Boolean requestedDriverStatus = false;
 
     private void getRequestedDriverStatus() {
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
@@ -1622,9 +1658,11 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                 if (dataSnapshot.exists()) {
                     txtDriverRequestedGroup.setText("Tài xế đang online");
                     imgDriverRequestedGroup.setImageDrawable(getActivity().getDrawable(R.drawable.circle_green));
+                    requestedDriverStatus = true;
                 } else {
                     txtDriverRequestedGroup.setText("Tài xế đang offline");
                     imgDriverRequestedGroup.setImageDrawable(getActivity().getDrawable(R.drawable.circle_red));
+                    requestedDriverStatus = false;
                 }
             }
 

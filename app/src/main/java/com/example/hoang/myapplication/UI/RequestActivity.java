@@ -32,7 +32,12 @@ import com.google.android.gms.location.places.Places;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 
+import org.angmarch.views.NiceSpinner;
+
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 public class RequestActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener,
@@ -112,6 +117,7 @@ public class RequestActivity extends AppCompatActivity implements
                 showDailog(request, places);
         }
     };
+    List<String> dataset = new LinkedList<>(Arrays.asList("Đồ nội thất","Hàng điện tử","Vật liệu xây dựng","Gói hàng nhỏ","Gói hàng lớn","Đồ ăn","Khác"));
 
     private void showDailog(final Request request, final PlaceBuffer postion) {
         final Dialog dialog = new Dialog(this);
@@ -126,17 +132,22 @@ public class RequestActivity extends AppCompatActivity implements
         Button dialogBack = (Button) layout.findViewById(R.id.btnBack);
         Button dialogConfirm = (Button) layout.findViewById(R.id.btnComfirm);
         Button dialogUpload = (Button) layout.findViewById(R.id.btnBack);
-
+        final NiceSpinner niceSpinner = (NiceSpinner) layout.findViewById(R.id.niceSpinner);
+        niceSpinner.attachDataSource(dataset);
         final EditText txtReceiverName = (EditText) layout.findViewById(R.id.edtTenNguoiNhan);
         final EditText txtReceiverPhone = (EditText) layout.findViewById(R.id.edtSoDienThoai);
         final EditText txtNote = (EditText) layout.findViewById(R.id.edtGhiChu);
+        if (request.getUri() != null && !request.getUri().isEmpty())
+            for (int i = 0; i < dataset.size(); i++) {
+                if (dataset.get(i).equals(request.getUri()))
+                    niceSpinner.setSelectedIndex(i);
+            }
 
         if (request.isRequestFilled()) {
             txtNote.setText(request.getNote());
             txtReceiverName.setText(request.getReceiverName());
             txtReceiverPhone.setText(request.getReceiverNumber());
         }
-        ImageView imgPic = (ImageView) layout.findViewById(R.id.imgAnh);
         dialogBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -156,6 +167,7 @@ public class RequestActivity extends AppCompatActivity implements
                     request.setReceiverNumber(txtReceiverPhone.getText().toString());
                     request.setReceiverName(txtReceiverName.getText().toString());
                     request.setNote(txtNote.getText().toString());
+                    request.setUri(dataset.get(niceSpinner.getSelectedIndex()));
                     if (number != -1) {
                         // Selecting the first object buffer.
                         final Place place = postion.get(0);

@@ -21,6 +21,9 @@ public class Trip implements Parcelable {
         byte tmpIsExpressMode = in.readByte();
         isExpressMode = tmpIsExpressMode == 0 ? null : tmpIsExpressMode == 1;
         status = in.readString();
+        requestCount = in.readInt();
+        startPointName = in.readString();
+        destinationPointNam = in.readString();
         pickupTime = in.readLong();
         droffOffTime = in.readLong();
         vehicleId = in.readString();
@@ -30,29 +33,6 @@ public class Trip implements Parcelable {
         byte tmpIsUsingLoading = in.readByte();
         isUsingLoading = tmpIsUsingLoading == 0 ? null : tmpIsUsingLoading == 1;
         distanceSum = in.readFloat();
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(id);
-        dest.writeString(driverid);
-        dest.writeString(customerid);
-        dest.writeString(drivingMode);
-        dest.writeByte((byte) (isExpressMode == null ? 0 : isExpressMode ? 1 : 2));
-        dest.writeString(status);
-        dest.writeLong(pickupTime);
-        dest.writeLong(droffOffTime);
-        dest.writeString(vehicleId);
-        dest.writeFloat(driverRating);
-        dest.writeFloat(customerRating);
-        dest.writeFloat(moneySum);
-        dest.writeByte((byte) (isUsingLoading == null ? 0 : isUsingLoading ? 1 : 2));
-        dest.writeFloat(distanceSum);
-    }
-
-    @Override
-    public int describeContents() {
-        return 0;
     }
 
     public static final Creator<Trip> CREATOR = new Creator<Trip>() {
@@ -66,6 +46,34 @@ public class Trip implements Parcelable {
             return new Trip[size];
         }
     };
+
+    public int getRequestCount() {
+        return requestCount;
+    }
+
+    public void setRequestCount(int requestCount) {
+        this.requestCount = requestCount;
+    }
+
+    public String getStartPointName() {
+        return startPointName;
+    }
+
+    public void setStartPointName(String startPointName) {
+        this.startPointName = startPointName;
+    }
+
+    public String getDestinationPointNam() {
+        return destinationPointNam;
+    }
+
+    public void setDestinationPointNam(String destinationPointNam) {
+        this.destinationPointNam = destinationPointNam;
+    }
+
+    private int requestCount;
+    private String startPointName;
+    private String destinationPointNam;
 
     public String getStatus() {
         return status;
@@ -198,4 +206,29 @@ public class Trip implements Parcelable {
         this.drivingMode = drivingMode;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(id);
+        dest.writeString(driverid);
+        dest.writeString(customerid);
+        dest.writeString(drivingMode);
+        dest.writeByte((byte) (isExpressMode == null ? 0 : isExpressMode ? 1 : 2));
+        dest.writeString(status);
+        dest.writeInt(requestCount);
+        dest.writeString(startPointName);
+        dest.writeString(destinationPointNam);
+        dest.writeLong(pickupTime);
+        dest.writeLong(droffOffTime);
+        dest.writeString(vehicleId);
+        dest.writeFloat(driverRating);
+        dest.writeFloat(customerRating);
+        dest.writeFloat(moneySum);
+        dest.writeByte((byte) (isUsingLoading == null ? 0 : isUsingLoading ? 1 : 2));
+        dest.writeFloat(distanceSum);
+    }
 }
