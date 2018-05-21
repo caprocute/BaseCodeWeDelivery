@@ -96,8 +96,10 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
     private void loadData(Account data) {
         if (data != null) {
             if (data.getTrip_count() != 0) {
-                txtCancelRate.setText(data.getTrip_cancel() / data.getTrip_count() * 100 + "%");
-                txtAcceptRate.setText(data.getTrip_accept() / data.getTrip_count() * 100 + "%");
+                float cRate = Math.round((float) data.getTrip_cancel() / (float) data.getTrip_count()*100);
+                float aRate = Math.round((float) data.getTrip_accept() / (float) data.getTrip_count()*100);
+                txtCancelRate.setText(cRate + "%");
+                txtAcceptRate.setText(aRate + "%");
             }
             txtName.setText(data.getLast_name() + " " + data.getFirst_name());
             txtPhone.setText(data.getPhone());
