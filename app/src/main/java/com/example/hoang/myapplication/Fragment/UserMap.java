@@ -1482,20 +1482,15 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
     }
 
     private List<List<Request>> listChoice = new ArrayList<>();
-    // Hàm tối ưu hóa tuyến đường
+
     private void optimizeTrip() {
-        // khởi tạo cho khoản cách luôn là lớn nhất
         maxDistance = 10000000;
-        // sao chép lại bộ các điểm dừng lúc chưa tối ưu
         List<Request> list = new ArrayList<>();
         for (int i = 1; i < tripRequests.size(); i++) {
             list.add(tripRequests.get(i));
         }
-        // khởi tạo danh sách lưu các bộ hoán vị điểm dừng
         listChoice = new ArrayList<>();
-        // Tính các bộ hóa vị
         printPermutation(list, 0, true);
-        // tìm bộ hóa vị có tuyến đường đi nhỏ nhất
         caculatorTripDistance(0);
     }
 
