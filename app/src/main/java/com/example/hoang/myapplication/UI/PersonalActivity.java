@@ -1,5 +1,6 @@
 package com.example.hoang.myapplication.UI;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -33,7 +34,6 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private StorageReference mStorageRef;
-    private CatLoadingView mView;
     final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_ACCOUNT);
     private CircleImageView imgProfile;
     private TextView txtName, txtEmail, txtPhone, txtRating, txtCount, txtAcceptRate, txtCancelRate;
@@ -72,9 +72,6 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void loadUserData() {
-        mView = new CatLoadingView();
-        mView.setCanceledOnTouchOutside(false);
-        mView.show(getSupportFragmentManager(), "Loading your data");
         loadAvatar();
         DatabaseReference userRoot = root.child(user.getUid());
         userRoot.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -96,8 +93,8 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
     private void loadData(Account data) {
         if (data != null) {
             if (data.getTrip_count() != 0) {
-                float cRate = Math.round((float) data.getTrip_cancel() / (float) data.getTrip_count()*100);
-                float aRate = Math.round((float) data.getTrip_accept() / (float) data.getTrip_count()*100);
+                float cRate = Math.round((float) data.getTrip_cancel() / (float) data.getTrip_count() * 100);
+                float aRate = Math.round((float) data.getTrip_accept() / (float) data.getTrip_count() * 100);
                 txtCancelRate.setText(cRate + "%");
                 txtAcceptRate.setText(aRate + "%");
             }
@@ -117,7 +114,6 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
             } else if (data.getRating() <= 5) {
                 txtRating.setText(R.string.rating_5_star);
             }
-            mView.dismiss();
         }
     }
 
@@ -134,6 +130,10 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
         switch (v.getId()) {
             case R.id.btnBackToolBar:
                 onBackPressed();
+                break;
+            case R.id.btnEdit:
+                Intent intent= new Intent(PersonalActivity.this,UserDetailActivity.class);
+                startActivity(intent);
                 break;
         }
     }

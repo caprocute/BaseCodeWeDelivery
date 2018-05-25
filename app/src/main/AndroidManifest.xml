@@ -85,7 +85,11 @@
             android:name=".UI.HistoryDetail"
             android:label="@string/title_activity_history_detail"
             android:theme="@style/NoActionBar"
-            android:windowSoftInputMode="stateHidden"></activity>
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name=".UI.UserDetailActivity"
+            android:label="@string/title_activity_user_detail"
+            android:theme="@style/NoActionBar"></activity>
     </application>
 
 </manifest>
