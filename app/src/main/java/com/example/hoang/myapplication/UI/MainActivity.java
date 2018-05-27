@@ -202,8 +202,9 @@ public class MainActivity extends AppCompatActivity
             case R.id.menu_wallet:
                 Toast.makeText(MainActivity.this, "Chức năng này sẽ được cập nhật trong các phiên bản tới", Toast.LENGTH_SHORT).show();
                 break;
-            case R.id.menu_setting:
-                Toast.makeText(MainActivity.this, "Chức năng này sẽ được cập nhật trong các phiên bản tới", Toast.LENGTH_SHORT).show();
+            case R.id.menu_mail:
+                intent = new Intent(MainActivity.this, MailBox.class);
+                startActivity(intent);
                 break;
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

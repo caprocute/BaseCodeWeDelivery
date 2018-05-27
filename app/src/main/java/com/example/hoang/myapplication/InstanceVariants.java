@@ -19,4 +19,5 @@ public class InstanceVariants {
     public static final String CHILD_GIFT = "GIFT";
     public static final String CHILD_HISTORY = "HISTORY";
     public static final String CHILD_FAVORITE = "FAVORITE";
+    public static final String CHILD_MAILBOX = "MAIL_BOX";
 }

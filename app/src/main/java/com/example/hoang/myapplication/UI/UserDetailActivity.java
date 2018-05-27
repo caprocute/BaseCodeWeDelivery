@@ -116,13 +116,13 @@ public class UserDetailActivity extends AppCompatActivity implements TextWatcher
                 saveData();
             }
         });
-        edtEmail.setOnTouchListener(new View.OnTouchListener() {
+    /*    edtEmail.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 signInGoogle();
                 return true;
             }
-        });
+        });*/
     }
 
     private void signInGoogle() {
@@ -151,7 +151,7 @@ public class UserDetailActivity extends AppCompatActivity implements TextWatcher
             edtEmail.setError("Không được để trống");
             return;
         }
-        if (!isValidEmail(edtEmail.getText())) return;
+       /* if (!isValidEmail(edtEmail.getText())) return;
         else {
             if (mGoogleSignInAccount != null && !mGoogleSignInAccount.getEmail().equals(user.getEmail())) {
 
@@ -182,7 +182,7 @@ public class UserDetailActivity extends AppCompatActivity implements TextWatcher
                     }
                 }
             }
-        }
+        }*/
         if (resultUri != null) {
             DataProduce dataProduce = new DataProduce();
             StorageReference ref = FirebaseStorage.getInstance().getReference().child("AVATAR/" + user.getUid());

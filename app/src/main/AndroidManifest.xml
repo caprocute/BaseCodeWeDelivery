@@ -95,6 +95,10 @@
         <activity
             android:name=".MailBox.ChatActivity"
             android:label="@string/title_activity_chat"
+            android:theme="@style/NoActionBar" />
+        <activity
+            android:name=".UI.MailBox"
+            android:label="@string/title_activity_mail_box"
             android:theme="@style/NoActionBar"></activity>
     </application>
 

@@ -29,7 +29,7 @@
 
             android:title="@string/menu_noti" />
         <item
-            android:id="@+id/menu_setting"
+            android:id="@+id/menu_mail"
             android:icon="@drawable/ic_mailbox"
 
             android:title="@string/menu_mailbox" />
