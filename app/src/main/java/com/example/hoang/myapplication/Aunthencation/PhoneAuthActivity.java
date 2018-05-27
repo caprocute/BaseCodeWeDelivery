@@ -207,8 +207,7 @@ public class PhoneAuthActivity extends AppCompatActivity implements
         account.setPhone(user.getPhoneNumber());
         account.setEmail(user.getEmail());
         if (accountgg != null) {
-            account.setFirst_name(accountgg.getGivenName());
-            account.setLast_name(accountgg.getFamilyName());
+            account.setFirst_name(accountgg.getGivenName() + " " + accountgg.getFamilyName());
             account.setAvartar(accountgg.getPhotoUrl().toString());
             uploadAvatar(account);
         }

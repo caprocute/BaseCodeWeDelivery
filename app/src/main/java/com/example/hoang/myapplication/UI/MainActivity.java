@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity
 
         mStorageRef = FirebaseStorage.getInstance().getReference();
         DatabaseReference userRoot = root.child(user.getUid());
-        userRoot.addListenerForSingleValueEvent(new ValueEventListener() {
+        userRoot.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
@@ -211,18 +211,17 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private void loadAvatar() {
-        StorageReference riversRef = mStorageRef.child("AVATAR/" + user.getUid() + ".jpg");
-        Glide.with(this /* context */)
-                .using(new FirebaseImageLoader())
-                .load(riversRef)
-                .into(profileImage);
+    private void loadAvatar(Account account) {
+        if (account.getAvartar() != null)
+            Glide.with(this /* context */)
+                    .load(account.getAvartar())
+                    .into(profileImage);
         profileImage.setOnClickListener(this);
     }
 
     private void loadData(Account account) {
-        txtHeaderName.setText(account.getFirst_name() + " " + account.getLast_name());
-        loadAvatar();
+        txtHeaderName.setText(account.getFirst_name());
+        loadAvatar(account);
     }
 
     @Override

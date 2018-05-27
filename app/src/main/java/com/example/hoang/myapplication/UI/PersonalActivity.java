@@ -40,6 +40,13 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
     private RatingBar ratingBar;
 
     @Override
+    public void onResume() {
+        super.onResume();
+        loadUserData();
+        loadAvatar();
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_personal);
@@ -71,15 +78,18 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
         mStorageRef = FirebaseStorage.getInstance().getReference();
     }
 
+    private Account userData;
+
     private void loadUserData() {
-        loadAvatar();
+
         DatabaseReference userRoot = root.child(user.getUid());
         userRoot.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    Account userData = dataSnapshot.getValue(Account.class);
+                    userData = dataSnapshot.getValue(Account.class);
                     loadData(userData);
+                    loadAvatar();
                 }
             }
 
@@ -98,7 +108,7 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
                 txtCancelRate.setText(cRate + "%");
                 txtAcceptRate.setText(aRate + "%");
             }
-            txtName.setText(data.getLast_name() + " " + data.getFirst_name());
+            txtName.setText(data.getFirst_name());
             txtPhone.setText(data.getPhone());
             txtEmail.setText(data.getEmail());
             txtCount.setText(data.getTrip_count() + " " + getString(R.string.count_text));
@@ -118,11 +128,10 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void loadAvatar() {
-        StorageReference riversRef = mStorageRef.child("AVATAR/" + user.getUid() + ".jpg");
-        Glide.with(this /* context */)
-                .using(new FirebaseImageLoader())
-                .load(riversRef)
-                .into(imgProfile);
+        if (userData != null)
+            Glide.with(this /* context */)
+                    .load(userData.getAvartar())
+                    .into(imgProfile);
     }
 
     @Override
@@ -132,7 +141,7 @@ public class PersonalActivity extends AppCompatActivity implements View.OnClickL
                 onBackPressed();
                 break;
             case R.id.btnEdit:
-                Intent intent= new Intent(PersonalActivity.this,UserDetailActivity.class);
+                Intent intent = new Intent(PersonalActivity.this, UserDetailActivity.class);
                 startActivity(intent);
                 break;
         }

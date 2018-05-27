@@ -153,7 +153,7 @@ public class HistoryDetail extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
                     mCustomer = dataSnapshot.getValue(Account.class);
-                    txtDriverName.setText(mCustomer.getFirst_name() + " " + mCustomer.getLast_name());
+                    txtDriverName.setText(mCustomer.getFirst_name());
                     txtVehicle.setText(mCustomer.getPhone());
                     if (mCustomer.getAvartar() != null || !mCustomer.getAvartar().isEmpty())
                         Glide.with(HistoryDetail.this).load(mCustomer.getAvartar()).into(imgDriver);

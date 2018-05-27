@@ -127,7 +127,7 @@ public class DriverSettingsActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
                     account = dataSnapshot.getValue(Account.class);
-                    mNameField.setText(account.getFirst_name() + " " + account.getLast_name());
+                    mNameField.setText(account.getFirst_name());
                     mPhoneField.setText(account.getPhone());
                     Glide.with(getApplication()).load(account.getAvartar()).into(mProfileImage);
                 }

@@ -9,6 +9,8 @@
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -89,6 +91,10 @@
         <activity
             android:name=".UI.UserDetailActivity"
             android:label="@string/title_activity_user_detail"
+            android:theme="@style/NoActionBar" />
+        <activity
+            android:name=".MailBox.ChatActivity"
+            android:label="@string/title_activity_chat"
             android:theme="@style/NoActionBar"></activity>
     </application>
 

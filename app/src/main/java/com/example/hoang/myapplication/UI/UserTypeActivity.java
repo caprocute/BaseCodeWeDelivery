@@ -1,5 +1,6 @@
 package com.example.hoang.myapplication.UI;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -44,6 +45,7 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
     private File localFile;
     public static String LOGIN_MODE = "LOGIN_MODE";
     private CatLoadingView mView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,34 +63,37 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
         DatabaseReference userRoot = root.child(user.getUid());
         loginDriver.setOnClickListener(this);
         loginUser.setOnClickListener(this);
+        final ProgressDialog progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle("Đang tải dữ liệu...");
+        progressDialog.show();
         userRoot.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     userData = dataSnapshot.getValue(Account.class);
                     loadData(userData);
+                    progressDialog.dismiss();
                 }
 
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
+                progressDialog.dismiss();
             }
         });
     }
 
     private void loadData(Account account) {
-        txtName.setText(account.getFirst_name() + " " + account.getLast_name());
-        loadAvatar();
+        txtName.setText(account.getFirst_name());
+        loadAvatar(account);
     }
 
-    private void loadAvatar() {
-        StorageReference riversRef = mStorageRef.child("AVATAR/" + user.getUid() + ".jpg");
-        Glide.with(this /* context */)
-                .using(new FirebaseImageLoader())
-                .load(riversRef)
-                .into(avatar);
+    private void loadAvatar(Account account) {
+        if (account.getAvartar() != null)
+            Glide.with(this /* context */)
+                    .load(account.getAvartar())
+                    .into(avatar);
     }
 
     @Override
@@ -135,7 +140,6 @@ public class UserTypeActivity extends AppCompatActivity implements View.OnClickL
                                 shareCustomer.setAvartar(account.getAvartar());
                                 shareCustomer.setFirst_name(account.getFirst_name());
                                 shareCustomer.setId(account.getId());
-                                shareCustomer.setLast_name(account.getLast_name());
                                 shareCustomer.setPhone(account.getPhone());
                                 shareCustomer.setRating(account.getRating());
                                 shareCustomer.setTrip_accept(account.getTrip_accept());
