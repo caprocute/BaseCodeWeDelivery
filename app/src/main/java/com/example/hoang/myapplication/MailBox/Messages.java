@@ -21,6 +21,9 @@ public class Messages {
 
     private String user;
 
+    public Messages() {
+    }
+
     public Messages(String mess, String user) {
         this.mess = mess;
         this.user = user;

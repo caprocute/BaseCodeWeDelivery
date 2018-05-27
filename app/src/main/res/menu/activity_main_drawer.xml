@@ -36,16 +36,15 @@
     </group>
 
     <item android:title="">
-        <item
-            android:id="@+id/menu_logout"
 
-            android:icon="@drawable/ic_logout"
-            android:title="Đăng xuất" />
         <item
             android:id="@+id/menu_policy"
-
             android:icon="@drawable/ic_help"
             android:title="@string/menu_policy" />
+        <item
+            android:id="@+id/menu_logout"
+            android:icon="@drawable/ic_logout"
+            android:title="Đăng xuất" />
     </item>
 
 </menu>

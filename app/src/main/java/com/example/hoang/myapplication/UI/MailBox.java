@@ -1,18 +1,22 @@
 package com.example.hoang.myapplication.UI;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Message;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.hoang.myapplication.Adapter.FavoriteDriverAdapter;
 import com.example.hoang.myapplication.Adapter.MailBoxAdapter;
 import com.example.hoang.myapplication.InstanceVariants;
+import com.example.hoang.myapplication.MailBox.ChatActivity;
 import com.example.hoang.myapplication.MailBox.Messages;
 import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.Model.Person;
@@ -35,6 +39,8 @@ public class MailBox extends AppCompatActivity {
     private MailBoxAdapter adapter;
     private ArrayList<Person> people = new ArrayList<>();
     private ListView listMess;
+    private ConstraintLayout groupNoMess;
+    ArrayList<String> strings = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,20 +48,31 @@ public class MailBox extends AppCompatActivity {
         setContentView(R.layout.activity_mail_box);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        mUser = FirebaseAuth.getInstance().getCurrentUser();
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onClick(View v) {
+                onBackPressed();
             }
         });
+
+        mUser = FirebaseAuth.getInstance().getCurrentUser();
         listMess = (ListView) findViewById(R.id.listMess);
         adapter = new MailBoxAdapter(this, R.layout.item_mail_box, people);
+        groupNoMess = (ConstraintLayout) findViewById(R.id.groupNoMess);
         listMess.setAdapter(adapter);
         loadListMess();
+
+        listMess.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent sendIntent = new Intent(MailBox.this, ChatActivity.class);
+                sendIntent.putExtra("receiver", strings.get(position));
+                startActivity(sendIntent);
+            }
+        });
     }
 
 
@@ -65,19 +82,25 @@ public class MailBox extends AppCompatActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
-                    ArrayList<String> strings = new ArrayList<>();
+                    strings.clear();
+                    groupNoMess.setVisibility(View.GONE);
+                    listMess.setVisibility(View.VISIBLE);
+                    strings = new ArrayList<>();
                     // dataSnapshot is the "issue" node with all children with id 0
                     for (DataSnapshot issue : dataSnapshot.getChildren()) {
                         // do something with the individual "issues"
                         String key = issue.getKey();
                         String[] object = key.split("_");
-                        strings.add(object[1]);
+                        if (!object[1].equals(mUser.getUid())) strings.add(object[1]);
                     }
                     people.clear();
                     for (int i = 0; i < strings.size(); i++) {
                         loadDetail(strings.get(i));
                     }
 
+                } else {
+                    groupNoMess.setVisibility(View.VISIBLE);
+                    listMess.setVisibility(View.GONE);
                 }
             }
 

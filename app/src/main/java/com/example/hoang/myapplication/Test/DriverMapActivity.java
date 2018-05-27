@@ -29,6 +29,7 @@ import com.directions.route.RouteException;
 import com.directions.route.Routing;
 import com.directions.route.RoutingListener;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.UI.DriverSettingsActivity;
 import com.example.hoang.myapplication.UI.LauncherActivity;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;

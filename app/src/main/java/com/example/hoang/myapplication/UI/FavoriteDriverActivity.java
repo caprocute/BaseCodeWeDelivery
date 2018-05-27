@@ -32,6 +32,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.hoang.myapplication.Adapter.FavoriteDriverAdapter;
 import com.example.hoang.myapplication.InstanceVariants;
+import com.example.hoang.myapplication.MailBox.ChatActivity;
 import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.Model.Gift;
 import com.example.hoang.myapplication.R;
@@ -168,8 +169,11 @@ public class FavoriteDriverActivity extends AppCompatActivity {
         sms.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+            /*    Intent sendIntent = new Intent(Intent.ACTION_VIEW);
                 sendIntent.setData(Uri.parse("sms:" + drivers.get(position).getmPhone()));
+                startActivity(sendIntent);*/
+                Intent sendIntent = new Intent(FavoriteDriverActivity.this, ChatActivity.class);
+                sendIntent.putExtra("receiver", drivers.get(position).getUserID().toString());
                 startActivity(sendIntent);
             }
         });

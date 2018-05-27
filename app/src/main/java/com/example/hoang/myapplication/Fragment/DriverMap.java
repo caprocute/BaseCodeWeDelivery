@@ -47,6 +47,7 @@ import com.directions.route.Routing;
 import com.directions.route.RoutingListener;
 import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
 import com.example.hoang.myapplication.InstanceVariants;
+import com.example.hoang.myapplication.MailBox.ChatActivity;
 import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.Model.ShareCustomer;
@@ -879,9 +880,12 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
 
                 break;
             case R.id.btnSms:
-                Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+                /*Intent sendIntent = new Intent(Intent.ACTION_VIEW);
                 sendIntent.setData(Uri.parse("sms:" + currentCustomer.getPhone()));
-                startActivity(sendIntent);
+                startActivity(sendIntent);*/
+                Intent sendIntent = new Intent(getActivity(), ChatActivity.class);
+                sendIntent.putExtra("receiver", currentCustomer.getId().toString());
+                getActivity().startActivity(sendIntent);
                 break;
             case R.id.btnDriverTrip:
                 showPickUpAlertDialog();

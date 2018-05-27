@@ -65,6 +65,7 @@ import com.example.hoang.myapplication.Adapter.PathJSONParser;
 import com.example.hoang.myapplication.Adapter.RecyclerListAdapter;
 import com.example.hoang.myapplication.Adapter.SimpleItemTouchHelperCallback;
 import com.example.hoang.myapplication.InstanceVariants;
+import com.example.hoang.myapplication.MailBox.ChatActivity;
 import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.Model.DriverPostion;
 import com.example.hoang.myapplication.Model.Request;
@@ -696,9 +697,12 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
                 break;
             case R.id.btnSMS:
-                Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+              /*  Intent sendIntent = new Intent(Intent.ACTION_VIEW);
                 sendIntent.setData(Uri.parse("sms:" + currentDriver.getmPhone()));
-                startActivity(sendIntent);
+                startActivity(sendIntent);*/
+                Intent sendIntent = new Intent(getActivity(), ChatActivity.class);
+                sendIntent.putExtra("receiver", currentDriver.getUserID().toString());
+                getActivity().startActivity(sendIntent);
                 break;
         }
     }

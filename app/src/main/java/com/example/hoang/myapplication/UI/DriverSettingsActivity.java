@@ -1,4 +1,4 @@
-package com.example.hoang.myapplication.Test;
+package com.example.hoang.myapplication.UI;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -30,7 +30,7 @@ public class DriverSettingsActivity extends AppCompatActivity {
 
     private Button mBack, mConfirm;
 
-    private ImageView mProfileImage;
+    private ImageView mProfileImage, buttonBack;
 
     private FirebaseAuth mAuth;
     private DatabaseReference mDriverDatabase;
@@ -64,6 +64,7 @@ public class DriverSettingsActivity extends AppCompatActivity {
 
         mBack = (Button) findViewById(R.id.back);
         mConfirm = (Button) findViewById(R.id.confirm);
+        buttonBack = (ImageView) findViewById(R.id.btnBackToolBar2);
 
         mAuth = FirebaseAuth.getInstance();
         userID = mAuth.getCurrentUser().getUid();
@@ -85,6 +86,13 @@ public class DriverSettingsActivity extends AppCompatActivity {
                 return;
             }
         });
+        buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+                return;
+            }
+        });
     }
 
     private void getUserInfo() {
@@ -97,7 +105,7 @@ public class DriverSettingsActivity extends AppCompatActivity {
                     mPhoneField.setText(driver.getmPhone().toString());
                     mCarField.setText(driver.getmCar().toString());
                     mService = driver.getmService();
-                    resultUri=driver.getmProfileImageUrl();
+                    resultUri = driver.getmProfileImageUrl();
                     switch (mService) {
                         case "HereBike":
                             mRadioGroup.check(R.id.UberX);

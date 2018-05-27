@@ -60,7 +60,7 @@
         <activity android:name=".Test.DriverMapActivity" />
         <activity android:name=".Test.CustomerMapActivity" />
         <activity android:name=".Test.CustomerSettingsActivity" />
-        <activity android:name=".Test.DriverSettingsActivity" />
+        <activity android:name=".UI.DriverSettingsActivity" />
         <activity android:name=".Test.HistoryActivity" />
         <activity android:name=".Test.HistorySingleActivity" />
         <activity
@@ -95,11 +95,13 @@
         <activity
             android:name=".MailBox.ChatActivity"
             android:label="@string/title_activity_chat"
-            android:theme="@style/NoActionBar" />
+            android:theme="@style/NoActionBar"
+            android:windowSoftInputMode="stateHidden" />
         <activity
             android:name=".UI.MailBox"
             android:label="@string/title_activity_mail_box"
-            android:theme="@style/NoActionBar"></activity>
+            android:theme="@style/NoActionBar"
+            android:windowSoftInputMode="stateHidden"></activity>
     </application>
 
 </manifest>

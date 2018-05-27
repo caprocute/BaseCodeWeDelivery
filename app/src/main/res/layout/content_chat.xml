@@ -9,6 +9,7 @@
     tools:showIn="@layout/activity_chat">
 
     <ScrollView
+        android:background="@color/grey_100"
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -21,6 +22,7 @@
 
         <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/layout2"
+            android:padding="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
@@ -37,9 +39,6 @@
         layout="@layout/chat_input"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
         android:gravity="bottom"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

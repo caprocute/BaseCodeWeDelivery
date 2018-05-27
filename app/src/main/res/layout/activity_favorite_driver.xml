@@ -23,7 +23,7 @@
                 android:background="?attr/colorPrimary"
                 android:backgroundTint="@color/appColor"
                 app:popupTheme="@style/NoActionBar.PopupOverlay"
-                app:title="" />
+                app:title="Tài xế ưa thích" />
 
         </android.support.constraint.ConstraintLayout>
     </android.support.design.widget.AppBarLayout>

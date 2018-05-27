@@ -16,8 +16,6 @@ import com.example.hoang.myapplication.Model.Account;
 import com.example.hoang.myapplication.Model.Driver;
 import com.example.hoang.myapplication.Model.ShareCustomer;
 import com.example.hoang.myapplication.R;
-import com.example.hoang.myapplication.Test.DriverSettingsActivity;
-import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;

@@ -41,9 +41,15 @@ public class FavoriteDriverAdapter extends ArrayAdapter<Driver> {
             final TextView txtname = (TextView) convertView.findViewById(R.id.txtDriverName);
             final RatingBar rating = (RatingBar) convertView.findViewById(R.id.ratingDriver);
             final ImageView img = (ImageView) convertView.findViewById(R.id.imgPro);
+            final ImageView type = (ImageView) convertView.findViewById(R.id.imgType);
             rating.setMax(5);
             txtname.setText(myArray.get(position).getmName());
             rating.setRating(myArray.get(position).getRating());
+
+            if (myArray.get(position).getmService().equals("HereBike"))
+                type.setImageDrawable(context.getDrawable(R.drawable.ic_motor_mode));
+            else
+                type.setImageDrawable(context.getDrawable(R.drawable.ic_car_mode));
             if (myArray.get(position).getmProfileImageUrl() != null && !myArray.get(position).getmProfileImageUrl().isEmpty()) {
                 Glide.with(context).load(myArray.get(position).getmProfileImageUrl()).into(img);
             }
