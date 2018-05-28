@@ -1173,26 +1173,6 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         });
     }
 
-
-    private void getHasRideEnded() {
-        driveHasEndedRef = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
-                .child(InstanceVariants.CHILD_WORKING_DRIVER).child(driverFoundID).child("customerRequest")/*.child("customerRideId")*/;
-        driveHasEndedRefListener = driveHasEndedRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-
-                } else {
-                    endRide();
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
-    }
-
     private void setFindDriverUI(int check) {
         switch (check) {
             case 0:
@@ -1274,15 +1254,6 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             imgCarMode.setImageDrawable(getActivity().getDrawable(R.drawable.ic_car_mode));
         }
     }
-
-    private double degreesToRadians(Double degrees) {
-        return degrees * Math.PI / 180;
-    }
-
-    private double radianToDegree(Double rad) {
-        return (180 / Math.PI) * rad;
-    }
-
 
     private List<Marker> markerList = new ArrayList<>();
     private GeoQueryEventListener mGeoQuerry;
@@ -1419,10 +1390,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
         googleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, routePadding));
     }
 
-
-    private static final int[] COLORS = new int[]{R.color.primary_dark_material_light};
     private float tripDistance = 0;
-
 
     private void drawMapRoute(final List<Request> tripRequests) {
         for (Request request : tripRequests) {

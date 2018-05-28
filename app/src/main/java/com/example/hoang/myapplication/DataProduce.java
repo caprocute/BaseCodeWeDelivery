@@ -49,7 +49,6 @@ public class DataProduce {
                     .setQuality(50)
                     .setOutputFormat("JPEG")
                     .setOutputFilename("resized_image")
-                    .setOutputDirPath(resultUri.getPath())
                     .setSourceImage(new File(resultUri.getLastPathSegment()))
                     .getResizedBitmap();
 
@@ -65,7 +64,7 @@ public class DataProduce {
                             @Override
                             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                                 progressDialog.dismiss();
-                                Toast.makeText(mContext, "Uploaded", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(mContext, "Cập nhật thông tin thành công", Toast.LENGTH_SHORT).show();
                                 linkDownload = taskSnapshot.getDownloadUrl();
                                 if (linkDownload != null) refSave.setValue(linkDownload + "");
                             }
@@ -82,7 +81,7 @@ public class DataProduce {
                             public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                                 double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot
                                         .getTotalByteCount());
-                                progressDialog.setMessage("Uploaded " + (int) progress + "%");
+                                progressDialog.setMessage("Cập nhật thông tin thành công " + (int) progress + "%");
                             }
                         });
             }

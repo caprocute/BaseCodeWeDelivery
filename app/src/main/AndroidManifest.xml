@@ -101,7 +101,11 @@
             android:name=".UI.MailBox"
             android:label="@string/title_activity_mail_box"
             android:theme="@style/NoActionBar"
-            android:windowSoftInputMode="stateHidden"></activity>
+            android:windowSoftInputMode="stateHidden" />
+        <activity
+            android:name=".UI.VehicleDetailActivity"
+            android:label="@string/title_activity_vehicle_detail"
+            android:theme="@style/NoActionBar"></activity>
     </application>
 
 </manifest>
