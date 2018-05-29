@@ -138,10 +138,9 @@ public class DriverSettingsActivity extends AppCompatActivity {
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 switch (checkedId) {
                     case R.id.UberX:
-                        loadVehicleData("Xe máy");
+
                         break;
                     case R.id.UberBlack:
-                        loadVehicleData("Ô tô");
                         break;
                 }
             }
@@ -149,11 +148,13 @@ public class DriverSettingsActivity extends AppCompatActivity {
 
 
     }
+
     @Override
-    public void onResume(){
+    public void onResume() {
         super.onResume();
         loadVehicleData("");
     }
+
     private void updateUI() {
         mNameField.setEnabled(mode);
         mCarField.setEnabled(mode);
@@ -161,31 +162,30 @@ public class DriverSettingsActivity extends AppCompatActivity {
         mRadioGroup.setEnabled(mode);
     }
 
+    private Driver driver = new Driver();
+
     private void getUserInfo() {
         mDriverDatabase.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
                     imgEdit.setEnabled(true);
-                    Driver driver = dataSnapshot.getValue(Driver.class);
+                    driver = dataSnapshot.getValue(Driver.class);
                     mNameField.setText(driver.getmName().toString());
                     mPhoneField.setText(driver.getmPhone().toString());
-                    mCarField.setText(driver.getmCar().toString());
                     mService = driver.getmService();
                     resultUri = driver.getmProfileImageUrl();
                     switch (mService) {
                         case "HereBike":
                             mRadioGroup.check(R.id.UberX);
                             if (driver.getmCar() != null && !driver.getmCar().isEmpty())
-                                loadVehicleData("Xe máy");
-                            break;
+                                break;
                         case "HereCar":
                             mRadioGroup.check(R.id.UberBlack);
                             if (driver.getmCar() != null && !driver.getmCar().isEmpty())
-                                loadVehicleData("Ô tô");
-                            break;
+                                break;
                     }
-
+                    mCarField.setText(driver.getmCar().toString());
                     Glide.with(getApplication()).load(driver.getmProfileImageUrl()).into(mProfileImage);
                 } else {
                     imgEdit.setEnabled(false);
@@ -219,7 +219,14 @@ public class DriverSettingsActivity extends AppCompatActivity {
                     adapter = new ArrayAdapter(DriverSettingsActivity.this, android.R.layout.simple_spinner_item, vehicleName);
                     mCarField.setAdapter(adapter);
                     imgEdit.setEnabled(true);
-                } else imgEdit.setEnabled(false);
+                    if (driver.getmCar() != null && !driver.getmCar().isEmpty()) {
+                        for (int i = 0; i < vehicleName.size(); i++)
+                            if (vehicleName.get(i).equals(driver.getmCar())) {
+                                mCarField.setSelectedIndex(i);
+                                break;
+                            }
+                    } else imgEdit.setEnabled(false);
+                }
             }
 
             @Override

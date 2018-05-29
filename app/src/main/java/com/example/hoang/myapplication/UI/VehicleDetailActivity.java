@@ -84,11 +84,11 @@ public class VehicleDetailActivity extends AppCompatActivity implements View.OnC
 
     private void extractData(Vehicle mVehicle) {
         edtBrand.setText(mVehicle.getBrand());
-        edtBrand.setText(mVehicle.getBrand());
-        edtBrand.setText(mVehicle.getBrand());
-        edtBrand.setText(mVehicle.getBrand());
+        edtOwnerName.setText(mVehicle.getOwnerName());
+        edtColor.setText(mVehicle.getColor());
+        edtPlate.setText(mVehicle.getPlate());
 
-        if (mVehicle.getVehicleType().equals("bike")) radMotor.setChecked(true);
+        if (mVehicle.getVehicleType().equals("Xe máy")) radMotor.setChecked(true);
         else radCar.setChecked(true);
 
         if (mVehicle.getImgVehicle() != null && !mVehicle.getImgVehicle().isEmpty())
@@ -183,8 +183,6 @@ public class VehicleDetailActivity extends AppCompatActivity implements View.OnC
         newVehicle.setColor(edtColor.getText().toString());
         newVehicle.setOwnerName(edtOwnerName.getText().toString());
         newVehicle.setPlate(edtPlate.getText().toString());
-        newVehicle.setImgVehicle(edtPlate.getText().toString());
-        newVehicle.setImgVehicleCer(edtPlate.getText().toString());
         if (mDeviceId != null) newVehicle.setId(mDeviceId);
         int selectId = groupVehicleType.getCheckedRadioButtonId();
         final RadioButton radioButton = (RadioButton) findViewById(selectId);
@@ -217,25 +215,26 @@ public class VehicleDetailActivity extends AppCompatActivity implements View.OnC
 
             return;
         }
-
+        newVehicle.setOwnerId(FirebaseAuth.getInstance().getUid());
         if (mVehicle != newVehicle) {
 
             deviceRef.child(mVehicle.getId()).setValue(newVehicle);
 
 
             StorageReference refVehicleImage = refVehicle.child(mVehicle.getId() + "a");
-            if (!mVehicle.getImgVehicleCer().equals(newVehicle.getImgVehicleCer()))
+
+            if (!mVehicle.getImgVehicleCer().equals(resultVehicleCer))
                 dataProduce.uploadImage(VehicleDetailActivity.this,
                         resultVehicleCer,
                         refVehicleImage,
-                        deviceRef.child(newVehicle.getId()).child("imgVehicle"));
+                        deviceRef.child(newVehicle.getId()).child("imgVehicleCer"));
 
             StorageReference refVehicleCer = refVehicle.child(mVehicle.getId() + "b");
-            if (!mVehicle.getImgVehicle().equals(newVehicle.getImgVehicle()))
+            if (!mVehicle.getImgVehicle().equals(resultVehicleImage))
                 dataProduce.uploadImage(VehicleDetailActivity.this,
                         resultVehicleImage,
                         refVehicleCer,
-                        deviceRef.child(newVehicle.getId()).child("imgVehicleCer"));
+                        deviceRef.child(newVehicle.getId()).child("imgVehicle"));
 
             return;
         }
