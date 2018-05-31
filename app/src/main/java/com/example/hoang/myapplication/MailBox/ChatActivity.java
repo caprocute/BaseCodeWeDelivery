@@ -1,5 +1,7 @@
 package com.example.hoang.myapplication.MailBox;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
@@ -16,10 +18,12 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.hoang.myapplication.InstanceVariants;
 import com.example.hoang.myapplication.Model.Person;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.UI.MainActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
@@ -37,18 +41,19 @@ import java.util.Map;
 public class ChatActivity extends AppCompatActivity {
     private LinearLayout layout;
     private RelativeLayout layout_2;
-    private ImageView sendButton;
+    private ImageView sendButton, imgDelete;
     private EditText messageArea;
     private ScrollView scrollView;
     private DatabaseReference reference1, reference2;
     private FirebaseUser mUser;
     private String mReceiver, mSend, mReceiverName;
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -65,6 +70,7 @@ public class ChatActivity extends AppCompatActivity {
         layout = (LinearLayout) findViewById(R.id.layout1);
         layout_2 = (RelativeLayout) findViewById(R.id.layout2);
         sendButton = (ImageView) findViewById(R.id.sendButton);
+        imgDelete = (ImageView) findViewById(R.id.imgDelete);
         messageArea = (EditText) findViewById(R.id.messageArea);
         scrollView = (ScrollView) findViewById(R.id.scrollView);
 
@@ -127,6 +133,42 @@ public class ChatActivity extends AppCompatActivity {
 
             }
         });
+        imgDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showAlertDialog();
+            }
+        });
+    }
+
+    public void showAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Chú ý!");
+        builder.setMessage("Xóa cuộc trò chuyện này? ");
+        builder.setCancelable(false);
+        builder.setPositiveButton("Đổng ý", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if (mReceiver != null && !mReceiver.isEmpty()) {
+                    reference1.removeValue(new DatabaseReference.CompletionListener() {
+                        @Override
+                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                            Toast.makeText(ChatActivity.this, "Đã xóa", Toast.LENGTH_LONG).show();
+                            finish();
+                        }
+                    });
+                }
+            }
+        });
+        builder.setNegativeButton("Hủy bỏ", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
     }
 
     private void loadDetail(String id) {
@@ -142,7 +184,7 @@ public class ChatActivity extends AppCompatActivity {
                         Map<String, String> map = (Map<String, String>) issue.getValue();
                         mReceiverName = map.get("first_name").toString();
                         if (mReceiverName != null && !mReceiverName.isEmpty())
-                            getSupportActionBar().setTitle(mReceiverName);
+                            toolbar.setTitle(mReceiverName);
                         return;
                     }
                 }

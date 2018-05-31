@@ -1,6 +1,8 @@
 package com.example.hoang.myapplication.UI;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.example.hoang.myapplication.DataProduce;
 import com.example.hoang.myapplication.InstanceVariants;
+import com.example.hoang.myapplication.MailBox.ChatActivity;
 import com.example.hoang.myapplication.Model.Vehicle;
 import com.example.hoang.myapplication.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -37,7 +40,7 @@ import com.google.firebase.storage.StorageReference;
 
 public class VehicleDetailActivity extends AppCompatActivity implements View.OnClickListener {
     private EditText edtOwnerName, edtBrand, edtColor, edtPlate;
-    private ImageView imgVehicleImage, imgVehicleCer;
+    private ImageView imgVehicleImage, imgVehicleCer, imgDelete;
     private Button btnBack, btnSave;
     private RadioGroup groupVehicleType;
     private RadioButton radMotor, radCar;
@@ -49,8 +52,10 @@ public class VehicleDetailActivity extends AppCompatActivity implements View.OnC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_vehicle_detail);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -58,9 +63,11 @@ public class VehicleDetailActivity extends AppCompatActivity implements View.OnC
                 onBackPressed();
             }
         });
+
         initVariants();
         mDeviceId = getIntent().getStringExtra("id");
         if (mDeviceId != null && !mDeviceId.isEmpty()) loadData(mDeviceId);
+        else imgDelete.setVisibility(View.GONE);
     }
 
     private void loadData(final String mDeviceId) {
@@ -111,6 +118,7 @@ public class VehicleDetailActivity extends AppCompatActivity implements View.OnC
         edtColor = (EditText) findViewById(R.id.edtColor);
         edtPlate = (EditText) findViewById(R.id.edtPlate);
         imgVehicleImage = (ImageView) findViewById(R.id.imgVehicleImage);
+        imgDelete = (ImageView) findViewById(R.id.imgDelete);
         imgVehicleCer = (ImageView) findViewById(R.id.imgVehicleCer);
         btnBack = (Button) findViewById(R.id.btnBack);
         btnSave = (Button) findViewById(R.id.btnSave);
@@ -122,6 +130,7 @@ public class VehicleDetailActivity extends AppCompatActivity implements View.OnC
         imgVehicleCer.setOnClickListener(this);
         btnBack.setOnClickListener(this);
         btnSave.setOnClickListener(this);
+        imgDelete.setOnClickListener(this);
 
         radMotor.setChecked(true);
     }
@@ -149,7 +158,43 @@ public class VehicleDetailActivity extends AppCompatActivity implements View.OnC
             case R.id.btnSave:
                 saveData();
                 break;
+            case R.id.imgDelete:
+                showAlertDialog();
+                break;
         }
+    }
+
+    public void showAlertDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Chú ý!");
+        builder.setMessage("Xóa thông tin phương tiện này? ");
+        builder.setCancelable(false);
+        builder.setPositiveButton("Đổng ý", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                if (mDeviceId != null && !mDeviceId.isEmpty()) {
+                    FirebaseDatabase.getInstance().getReference()
+                            .child(InstanceVariants.CHILD_VEHICLE)
+                            .child(mDeviceId)
+                            .removeValue(new DatabaseReference.CompletionListener() {
+                                @Override
+                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                    Toast.makeText(VehicleDetailActivity.this, "Đã xóa", Toast.LENGTH_LONG).show();
+                                    finish();
+                                }
+                            });
+                }
+            }
+        });
+        builder.setNegativeButton("Hủy bỏ", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
     }
 
     private void saveData() {

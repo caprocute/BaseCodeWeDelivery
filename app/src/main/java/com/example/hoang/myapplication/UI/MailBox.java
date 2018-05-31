@@ -46,8 +46,10 @@ public class MailBox extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mail_box);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -61,8 +63,6 @@ public class MailBox extends AppCompatActivity {
         adapter = new MailBoxAdapter(this, R.layout.item_mail_box, people);
         groupNoMess = (ConstraintLayout) findViewById(R.id.groupNoMess);
         listMess.setAdapter(adapter);
-        loadListMess();
-
         listMess.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -73,6 +73,11 @@ public class MailBox extends AppCompatActivity {
         });
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadListMess();
+    }
 
     private void loadListMess() {
         Query query = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_MAILBOX).orderByValue().startAt(mUser.getUid() + "_");

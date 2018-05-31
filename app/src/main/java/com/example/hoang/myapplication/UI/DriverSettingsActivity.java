@@ -42,7 +42,7 @@ public class DriverSettingsActivity extends AppCompatActivity {
     private EditText mNameField, mPhoneField;
     private NiceSpinner mCarField;
 
-    private Button mBack, mConfirm;
+    private Button  mConfirm;
 
     private ImageView mProfileImage, buttonBack, imgAddVehicle, imgEdit;
 
@@ -82,7 +82,6 @@ public class DriverSettingsActivity extends AppCompatActivity {
 
         mRadioGroup = (RadioGroup) findViewById(R.id.radioGroup);
 
-        mBack = (Button) findViewById(R.id.back);
         mConfirm = (Button) findViewById(R.id.confirm);
         buttonBack = (ImageView) findViewById(R.id.btnBackToolBar2);
 
@@ -102,13 +101,6 @@ public class DriverSettingsActivity extends AppCompatActivity {
             }
         });
 
-        mBack.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-                return;
-            }
-        });
         buttonBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
