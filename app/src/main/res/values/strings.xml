@@ -6,7 +6,7 @@
         <item>Đã hoàn thành</item>
         <item>Bị hủy</item>
     </string-array>
-
+    <string name="runtime_permissions_txt">Vui lòng cấp quyền cho ứng dụng.</string>
     <string name="about_us">Về chúng tôi</string>
     <string name="quick_help">Trợ giúp nhanh</string>
     <string name="mail_box">Hòm thư góp ý</string>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/menu_wallet"
+            android:title="@string/menu_wallet" />
+        <item
+            android:id="@+id/menu_history"
+            android:title="@string/menu_history" />
+        <item
+            android:id="@+id/menu_contact"
+            android:title="@string/menu_contact" />
+        <item
+            android:id="@+id/menu_noti"
+            android:title="@string/menu_noti" />
+        <item
+            android:id="@+id/menu_setting"
+            android:title="@string/menu_mailbox" />
+    </group>
+
+    <item android:title="">
+        <menu>
+            <item
+                android:id="@+id/nav_share"
+                android:title="@string/menu_share" />
+            <item
+                android:id="@+id/nav_send"
+                android:title="@string/menu_driver" />
+            <item
+                android:id="@+id/menu_policy"
+                android:title="@string/menu_policy" />
+        </menu>
+    </item>
+
+</menu>

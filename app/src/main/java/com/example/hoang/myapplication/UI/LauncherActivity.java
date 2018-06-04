@@ -1,5 +1,6 @@
 package com.example.hoang.myapplication.UI;
 
+import android.Manifest;
 import android.content.Intent;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -15,11 +16,12 @@ import android.widget.Toast;
 
 import com.example.hoang.myapplication.Aunthencation.SignUpActivity;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.RuntimePermissionsActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.rilixtech.CountryCodePicker;
 
-public class LauncherActivity extends AppCompatActivity {
+public class LauncherActivity extends RuntimePermissionsActivity {
     private CountryCodePicker mCcp;
     private AppCompatEditText mEdtPhoneNumber;
     private int mTime = 3;
@@ -30,6 +32,7 @@ public class LauncherActivity extends AppCompatActivity {
     private LinearLayout mlayout;
     private TextView connect;
     private FirebaseAuth mAuth;
+    private static final int REQUEST_PERMISSIONS = 20;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,10 +57,29 @@ public class LauncherActivity extends AppCompatActivity {
 /*
         mCcp.setOnClickListener(onClickListener);
 */
+
+        requestPermission();
+    }
+
+    @Override
+    public void onPermissionsGranted(final int requestCode) {
+        /*Toast.makeText(this, "Permissions Received.", Toast.LENGTH_LONG).show();*/
         mEdtPhoneNumber.setOnClickListener(onClickListener);
         connect.setOnClickListener(onClickListener);
         phoneClick.setOnClickListener(onClickListener);
+    }
 
+    private void requestPermission() {
+        LauncherActivity.super.requestAppPermissions(new
+                        String[]{
+                        Manifest.permission.CALL_PHONE,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.INTERNET
+                }
+                , R.string.runtime_permissions_txt
+                , REQUEST_PERMISSIONS);
     }
 
     private View.OnClickListener onClickListener = new View.OnClickListener() {
