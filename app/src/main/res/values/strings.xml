@@ -54,7 +54,7 @@
     <string name="driver_login">Tài khoản tài xế</string>
     <!--item menu -->
     <string name="menu_wallet">Ví tài khoản</string>
-    <string name="menu_history">Lịch sử đặt xe</string>
+    <string name="menu_history">Lịch sử hoạt động</string>
     <string name="menu_help">Hỗ trợ</string>
     <string name="menu_share">Giới thiệu bạn bè</string>
     <string name="menu_noti">Thông báo</string>

@@ -438,6 +438,10 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         geoFire.removeLocation(userId);
     }
 
+    public void onLogOut() {
+        disconnectDriver();
+    }
+
     private DatabaseReference refAvailable;
     private ValueEventListener valueEventListenerAvaiable;
 

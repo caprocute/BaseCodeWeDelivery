@@ -9,6 +9,10 @@
             android:icon="@drawable/ic_new"
             android:title="Đơn hàng mới" />
         <item
+            android:id="@+id/menu_driver_working"
+            android:icon="@drawable/ic_process"
+            android:title="Đơn hàng đang xử lý" />
+        <item
             android:id="@+id/menu_wallet"
             android:icon="@drawable/ic_wallet"
 
@@ -33,10 +37,7 @@
             android:icon="@drawable/ic_mailbox"
 
             android:title="@string/menu_mailbox" />
-        <item
-            android:id="@+id/menu_driver_working"
-            android:icon="@drawable/ic_mailbox"
-            android:title="Lịch làm việc" />
+
     </group>
 
     <item android:title="">

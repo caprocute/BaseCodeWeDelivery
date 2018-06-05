@@ -11,6 +11,7 @@ import java.util.Date;
  *
  */
 public class Request implements Parcelable {
+
     protected Request(Parcel in) {
         id = in.readString();
         uri = in.readString();
@@ -22,6 +23,7 @@ public class Request implements Parcelable {
         destination = in.readParcelable(LatLng.class.getClassLoader());
         note = in.readString();
         money = in.readLong();
+        timeDrop = in.readString();
     }
 
     public static final Creator<Request> CREATOR = new Creator<Request>() {
@@ -126,11 +128,11 @@ public class Request implements Parcelable {
         this.money = money;
     }
 
-    public Date getTimeDrop() {
+    public String getTimeDrop() {
         return timeDrop;
     }
 
-    public void setTimeDrop(Date timeDrop) {
+    public void setTimeDrop(String timeDrop) {
         this.timeDrop = timeDrop;
     }
 
@@ -145,7 +147,7 @@ public class Request implements Parcelable {
                    String receiverNumber, LatLng destination, String destinationName,
                    String note,
                    long money,
-                   Date timeDrop) {
+                   String timeDrop) {
         this.id = id;
         this.tripID = tripID;
         this.receiverName = receiverName;
@@ -162,7 +164,7 @@ public class Request implements Parcelable {
     private LatLng destination;
     private String note;
     private long money;
-    private Date timeDrop;
+    private String timeDrop;
 
     public boolean isRequestFilled() {
         if (this.receiverName == null || this.receiverName.isEmpty()) return false;
@@ -203,5 +205,6 @@ public class Request implements Parcelable {
         dest.writeParcelable(destination, flags);
         dest.writeString(note);
         dest.writeLong(money);
+        dest.writeString(timeDrop);
     }
 }

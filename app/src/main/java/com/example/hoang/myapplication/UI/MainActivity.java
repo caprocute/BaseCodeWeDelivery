@@ -4,11 +4,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -79,6 +81,7 @@ public class MainActivity extends AppCompatActivity
         profileImage = (CircleImageView) header.findViewById(R.id.profileImage);
         txtHeaderName = (TextView) header.findViewById(R.id.txtheader_name);
         resetMap();
+        checkIfRequesredDriver();
         final DatabaseReference root = FirebaseDatabase.getInstance().getReference().child(CHILD_ACCOUNT);
 
         mStorageRef = FirebaseStorage.getInstance().getReference();
@@ -89,7 +92,7 @@ public class MainActivity extends AppCompatActivity
                 if (dataSnapshot.exists()) {
                     userData = dataSnapshot.getValue(Account.class);
                     loadData(userData);
-                    checkIfRequesredDriver();
+
                 }
             }
 
@@ -100,6 +103,11 @@ public class MainActivity extends AppCompatActivity
         });
         hideItem();
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
     }
 
     private void hideItem() {
@@ -113,14 +121,29 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    Driver driver;
+
     private void checkIfRequesredDriver() {
         Intent intent = getIntent();
-        Driver driver = (Driver) intent.getParcelableExtra("package");
+        driver = (Driver) intent.getParcelableExtra("package");
         if (driver != null) {
-            UserMap myFragment = (UserMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
-            if (myFragment != null && myFragment.isVisible()) {
-                myFragment.requestWithDriver(driver);
-            }
+            final ProgressDialog progressDialog = new ProgressDialog(this);
+            progressDialog.setTitle("Đang kết nối...");
+            progressDialog.show();
+            new CountDownTimer(3000, 1000) {
+                public void onFinish() {
+                    UserMap myFragment = (UserMap) fragmentManager.findFragmentByTag("MAP_FRAGMENT");
+                    if (myFragment != null && myFragment.isVisible()) {
+                        myFragment.requestWithDriver(driver);
+                    }
+                    progressDialog.dismiss();
+                }
+
+                public void onTick(long millisUntilFinished) {
+                    // millisUntilFinished    The amount of time until finished.
+                }
+            }.start();
+
         }
     }
 
@@ -313,9 +336,16 @@ public class MainActivity extends AppCompatActivity
         builder.setPositiveButton("Đổng ý", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
+                if (!loginMode) {
+                    DriverMap myFragment = (DriverMap) getFragmentManager().findFragmentByTag("MAP_FRAGMENT");
+                    if (myFragment != null && myFragment.isVisible()) {
+                        myFragment.onLogOut();
+                    }
+                }
                 mAuth.signOut();
                 Intent intent = new Intent(MainActivity.this, LauncherActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
                 finish();
                 startActivity(intent);
             }

@@ -3,7 +3,9 @@ package com.example.hoang.myapplication.Fragment;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -24,13 +26,17 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -56,6 +62,8 @@ import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.Model.ShareCustomer;
 import com.example.hoang.myapplication.Model.Trip;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.UI.DriverWorkingActivity;
+import com.example.hoang.myapplication.UI.MainActivity;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
@@ -93,10 +101,14 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
+import org.angmarch.views.NiceSpinner;
+
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -291,8 +303,195 @@ public class DriverWorkingMap extends Fragment implements OnMapReadyCallback, Vi
         listRequest.setAdapter(adapter);
         loadHistory();
         showCurrentPlace();
+
+        listRequest.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                showDailog(requestArrayList.get(position), position);
+            }
+        });
         return rootView;
     }
+
+    private Dialog dialog;
+    private View layout;
+    List<String> dataset = new LinkedList<>(Arrays.asList("Đồ nội thất", "Hàng điện tử", "Vật liệu xây dựng", "Gói hàng nhỏ", "Gói hàng lớn", "Đồ ăn", "Khác"));
+
+    private void showDailog(final Request request, final int postion) {
+        dialog = new Dialog(getActivity());
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+        lp.copyFrom(dialog.getWindow().getAttributes());
+
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        layout = inflater.inflate(R.layout.request_dialog, null);
+
+        Button dialogBack = (Button) layout.findViewById(R.id.btnBack);
+        Button dialogConfirm = (Button) layout.findViewById(R.id.btnComfirm);
+        Button btnSee = (Button) layout.findViewById(R.id.btnSee);
+        Button btnDone = (Button) layout.findViewById(R.id.btnDone);
+
+        dialogConfirm.setVisibility(View.GONE);
+        btnSee.setVisibility(View.VISIBLE);
+        btnDone.setVisibility(View.VISIBLE);
+
+        final EditText txtReceiverName = (EditText) layout.findViewById(R.id.edtTenNguoiNhan);
+        final TextView txtDialogName = (TextView) layout.findViewById(R.id.txtDialogName);
+        final EditText txtReceiverPhone = (EditText) layout.findViewById(R.id.edtSoDienThoai);
+        final EditText txtNote = (EditText) layout.findViewById(R.id.edtGhiChu);
+        final NiceSpinner niceSpinner = (NiceSpinner) layout.findViewById(R.id.niceSpinner);
+
+
+        niceSpinner.attachDataSource(dataset);
+        if (request.getUri() != null && !request.getUri().isEmpty())
+            for (int i = 0; i < dataset.size(); i++) {
+                if (dataset.get(i).equals(request.getUri()))
+                    niceSpinner.setSelectedIndex(i);
+            }
+
+        dialogConfirm.setVisibility(View.GONE);
+        txtDialogName.setText("Thông tin đơn hàng");
+        txtNote.setEnabled(false);
+        txtReceiverName.setEnabled(false);
+        txtReceiverPhone.setEnabled(false);
+        niceSpinner.setEnabled(false);
+
+        if (request.isRequestFilled()) {
+            txtNote.setText(request.getNote());
+            txtReceiverName.setText(request.getReceiverName());
+            txtReceiverPhone.setText(request.getReceiverNumber());
+        }
+        dialogBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialogConfirm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!PhoneNumberUtils.isGlobalPhoneNumber(txtReceiverPhone.getText().toString()))
+                    txtReceiverPhone.setError("Số điện thoại không hợp lệ");
+                else if (txtReceiverName.getText().toString().isEmpty())
+                    txtReceiverName.setError("Không được để trống");
+                else if (txtReceiverPhone.getText().toString().isEmpty())
+                    txtReceiverPhone.setError("Không được để trống");
+                else {
+                    request.setReceiverNumber(txtReceiverPhone.getText().toString());
+                    request.setReceiverName(txtReceiverName.getText().toString());
+                    request.setNote(txtNote.getText().toString());
+                    request.setUri(dataset.get(niceSpinner.getSelectedIndex()));
+                    dialog.dismiss();
+                }
+            }
+        });
+        btnSee.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
+                        new LatLng(request.getDestination().latitude,
+                                request.getDestination().longitude), DEFAULT_ZOOM));
+                dialog.dismiss();
+            }
+        });
+        btnDone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showAlertDialog(request);
+            }
+        });
+        dialog.setContentView(layout);
+        dialog.show();
+    }
+
+    public void showAlertDialog(final Request request) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Chú ý!");
+        builder.setMessage("Xác nhận bạn đã giao hàng đến tay người nhận.  ");
+        builder.setCancelable(false);
+        builder.setPositiveButton("Xác nhận", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                updateRequest(request);
+                dialog.dismiss();
+            }
+        });
+        builder.setNegativeButton("Hủy bỏ", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.dismiss();
+            }
+        });
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+
+    }
+
+    private void updateRequest(Request request) {
+        request.setStatus("done");
+        long time = System.currentTimeMillis();
+        request.setTimeDrop(time + "");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST).child(request.getId());
+        ref.setValue(request);
+        checkIfTripDone(request);
+    }
+
+    private void checkIfTripDone(final Request request) {
+        Query query = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST).orderByChild("tripID").equalTo(request.getTripID());
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
+                    int dem = 0;
+                    boolean check = true;
+                    for (DataSnapshot issue : dataSnapshot.getChildren()) {
+                        if (dem != 0) {
+                            Request request = new Request();
+                            Map<String, Object> driverMap = (Map<String, Object>) issue.getValue();
+                            if (driverMap.get("status") != null)
+                                request.setStatus(driverMap.get("status").toString());
+                            if (!request.getStatus().equals("done")) check = false;
+                        } else dem++;
+
+                    }
+                    if (check) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setTitle("Chú ý!");
+                        builder.setMessage("Đơn hàng " + request.getTripID() + " đã hoàn thành. Hệ thống sẽ tự động thông báo cho khách hàng.");
+                        builder.setCancelable(false);
+                        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+
+                            }
+                        });
+                        builder.setNegativeButton("Hủy bỏ", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.dismiss();
+                            }
+                        });
+                        AlertDialog alertDialog = builder.create();
+                        alertDialog.show();
+
+                        DatabaseReference ref = FirebaseDatabase.getInstance()
+                                .getReference()
+                                .child(InstanceVariants.CHILD_TRIPS)
+                                .child(request.getTripID()).child("status");
+                        ref.setValue("done");
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
 
     private void loadHistory() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -381,14 +580,6 @@ public class DriverWorkingMap extends Fragment implements OnMapReadyCallback, Vi
                                             iter.remove();
                                         }
                                     }
-
-                                /*    for (Marker marker : markerList) {
-                                        if (marker.getTag() != null && marker.getTag().equals(request.getId())) {
-                                            marker.remove();
-                                            markerList.remove(marker);
-                                            return;
-                                        }
-                                    }*/
                                     Iterator<Request> iterRe = requestArrayList.iterator();
                                     while (iterRe.hasNext()) {
                                         Request str = iterRe.next();
@@ -396,11 +587,6 @@ public class DriverWorkingMap extends Fragment implements OnMapReadyCallback, Vi
                                             iterRe.remove();
                                         }
                                     }
-                                   /* for (Request request1 : requestArrayList) {
-                                        if (request1.getId().equals(request.getId())) {
-                                            requestArrayList.remove(request1);
-                                        }
-                                    }*/
                                 }
                             }
 
