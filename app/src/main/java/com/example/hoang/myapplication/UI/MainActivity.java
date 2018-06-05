@@ -108,6 +108,8 @@ public class MainActivity extends AppCompatActivity
         if (!loginMode) {
             nav_Menu.findItem(R.id.menu_new).setVisible(false);
             nav_Menu.findItem(R.id.menu_contact).setVisible(false);
+        } else {
+            nav_Menu.findItem(R.id.menu_driver_working).setVisible(false);
         }
     }
 
@@ -200,6 +202,10 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.menu_mail:
                 intent = new Intent(MainActivity.this, MailBox.class);
+                startActivity(intent);
+                break;
+            case R.id.menu_driver_working:
+                intent = new Intent(MainActivity.this, DriverWorkingActivity.class);
                 startActivity(intent);
                 break;
         }

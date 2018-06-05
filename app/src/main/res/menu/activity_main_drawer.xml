@@ -33,6 +33,10 @@
             android:icon="@drawable/ic_mailbox"
 
             android:title="@string/menu_mailbox" />
+        <item
+            android:id="@+id/menu_driver_working"
+            android:icon="@drawable/ic_mailbox"
+            android:title="Lịch làm việc" />
     </group>
 
     <item android:title="">

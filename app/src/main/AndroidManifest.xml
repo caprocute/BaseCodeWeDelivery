@@ -56,13 +56,10 @@
             android:name=".UI.RequestActivity"
             android:theme="@style/Base.Theme.AppCompat.Light.DarkActionBar" />
         <activity android:name=".Test.DriverLoginActivity" />
-        <activity android:name=".Test.CustomerLoginActivity" />
-        <activity android:name=".Test.DriverMapActivity" />
-        <activity android:name=".Test.CustomerMapActivity" />
-        <activity android:name=".Test.CustomerSettingsActivity" />
+
+
         <activity android:name=".UI.DriverSettingsActivity" />
-        <activity android:name=".Test.HistoryActivity" />
-        <activity android:name=".Test.HistorySingleActivity" />
+
         <activity
             android:name=".UI.TripReuqestActivity"
             android:windowSoftInputMode="stateHidden" />
@@ -105,6 +102,10 @@
         <activity
             android:name=".UI.VehicleDetailActivity"
             android:label="@string/title_activity_vehicle_detail"
+            android:theme="@style/NoActionBar" />
+        <activity
+            android:name=".UI.DriverWorkingActivity"
+            android:label="@string/title_activity_driver_working"
             android:theme="@style/NoActionBar"></activity>
     </application>
 
