@@ -1,10 +1,19 @@
 package com.example.hoang.myapplication.UI;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.Notification;
+import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Message;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -12,10 +21,19 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.RatingBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.example.hoang.myapplication.MailBox.ChatActivity;
 import com.example.hoang.myapplication.Model.Trip;
 import com.example.hoang.myapplication.R;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.messaging.FirebaseMessaging;
+
+import java.io.Serializable;
 
 public class TripReuqestActivity extends AppCompatActivity implements View.OnClickListener {
     private CheckBox checLoading;
@@ -56,6 +74,8 @@ public class TripReuqestActivity extends AppCompatActivity implements View.OnCli
         imgTipPre.setOnClickListener(this);
         imgTipNext.setOnClickListener(this);
         btnSend.setOnClickListener(this);
+        btnSend.setOnClickListener(this);
+        imBillBoard.setOnClickListener(this);
         txtDriverType.setText(trip.getDrivingMode());
 
         if (!trip.getExpressMode()) radioButton1.setChecked(true);
@@ -119,7 +139,7 @@ public class TripReuqestActivity extends AppCompatActivity implements View.OnCli
                 else if (trip.getDistanceSum() > 15000)
                     countSum += 150000 + 6 * 20000 + 5 * 15000 + (trip.getDistanceSum() - 15000) * 14;
             } else {
-                if (trip.getDistanceSum() <= 4000) countSum += 150000;
+                if (trip.getDistanceSum() <= 4000) countSum += 200000;
                 else if (trip.getDistanceSum() > 4000 && trip.getDistanceSum() <= 10000)
                     countSum += 150000 + (trip.getDistanceSum() - 4000) * 25;
                 else if (trip.getDistanceSum() > 10000 && trip.getDistanceSum() <= 15000)
@@ -142,9 +162,46 @@ public class TripReuqestActivity extends AppCompatActivity implements View.OnCli
         txtTripSum.setText(trip.getMoneySum() + " VNĐ");
     }
 
+    public static class Message {
+        public String title;
+        public String message;
+
+        public Message(String title, String message) {
+            this.title = title;
+            this.message = message;
+        }
+    }
+
+    public void sendMessage(View view) {
+        DatabaseReference myRef = FirebaseDatabase.getInstance().getReference("messages");
+        myRef.push().setValue(new Message("hello", "fine"));
+        Toast.makeText(this, "Message Sent", Toast.LENGTH_SHORT).show();
+    }
+
+    Dialog dialog;
+
+    private void showPriceDialog() {
+        dialog = new Dialog(this);
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+        lp.copyFrom(dialog.getWindow().getAttributes());
+        lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+        lp.height = WindowManager.LayoutParams.MATCH_PARENT;
+
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View layout = inflater.inflate(R.layout.price_board, null);
+        dialog.setContentView(layout);
+        dialog.show();
+        dialog.getWindow().setAttributes(lp);
+    }
+
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
+            case R.id.imgBillBoard:
+                //todo
+                showPriceDialog();
+                break;
             case R.id.imgTipNext:
                 tipCount++;
                 txtTip.setText(tipCount + "");

@@ -53,6 +53,7 @@ import com.example.hoang.myapplication.Model.Request;
 import com.example.hoang.myapplication.Model.ShareCustomer;
 import com.example.hoang.myapplication.Model.Trip;
 import com.example.hoang.myapplication.R;
+import com.example.hoang.myapplication.UI.MainActivity;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
@@ -205,51 +206,53 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         @Override
         public void onLocationResult(LocationResult locationResult) {
             for (Location location : locationResult.getLocations()) {
-                if (getActivity().getApplicationContext() != null) {
-                    Log.d(TAG, "onLocationResult: tripid=" + tripId);
-                    if (!tripId.equals("") && mLastLocation != null && location != null) {
-                        rideDistance += mLastLocation.distanceTo(location) / 1000;
-                    }
-                    Double bearing = bearingBetweenLocations(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()),
-                            new LatLng(location.getLatitude(), location.getLongitude()));
-                    mLastLocation = location;
+                if (isAdded()) {
+                    if (getActivity().getApplicationContext() != null) {
+                        Log.d(TAG, "onLocationResult: tripid=" + tripId);
+                        if (!tripId.equals("") && mLastLocation != null && location != null) {
+                            rideDistance += mLastLocation.distanceTo(location) / 1000;
+                        }
+                        Double bearing = bearingBetweenLocations(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()),
+                                new LatLng(location.getLatitude(), location.getLongitude()));
+                        mLastLocation = location;
 
-                    GeomagneticField geoField;
-                    geoField = new GeomagneticField(
-                            Double.valueOf(location.getLatitude()).floatValue(),
-                            Double.valueOf(location.getLongitude()).floatValue(),
-                            Double.valueOf(location.getAltitude()).floatValue(),
-                            System.currentTimeMillis()
-                    );
-                    LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-                    mMap.animateCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
+                        GeomagneticField geoField;
+                        geoField = new GeomagneticField(
+                                Double.valueOf(location.getLatitude()).floatValue(),
+                                Double.valueOf(location.getLongitude()).floatValue(),
+                                Double.valueOf(location.getAltitude()).floatValue(),
+                                System.currentTimeMillis()
+                        );
+                        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+                        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+                        mMap.animateCamera(CameraUpdateFactory.zoomTo(DEFAULT_ZOOM));
 
-                    String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                    DatabaseReference refRoot = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_DRIVER_AVAIABLE);
-                    DatabaseReference refAvailable;
-                    DatabaseReference refBearing = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_BEARING);
-                    refBearing.child(userId).setValue(bearing);
+                        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                        DatabaseReference refRoot = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_DRIVER_AVAIABLE);
+                        DatabaseReference refAvailable;
+                        DatabaseReference refBearing = FirebaseDatabase.getInstance().getReference(InstanceVariants.CHILD_BEARING);
+                        refBearing.child(userId).setValue(bearing);
 
-                    if (mDriverType) {
-                        refAvailable = refRoot.child(InstanceVariants.CHILD_MOTOR_POSTION);
-                    } else {
-                        refAvailable = refRoot.child(InstanceVariants.CHILD_CAR_POSTION);
-                    }
-                    DatabaseReference refWorking = FirebaseDatabase.getInstance().getReference("driversWorking");
-                    GeoFire geoFireAvailable = new GeoFire(refAvailable);
-                    GeoFire geoFireWorking = new GeoFire(refWorking);
+                        if (mDriverType) {
+                            refAvailable = refRoot.child(InstanceVariants.CHILD_MOTOR_POSTION);
+                        } else {
+                            refAvailable = refRoot.child(InstanceVariants.CHILD_CAR_POSTION);
+                        }
+                        DatabaseReference refWorking = FirebaseDatabase.getInstance().getReference("driversWorking");
+                        GeoFire geoFireAvailable = new GeoFire(refAvailable);
+                        GeoFire geoFireWorking = new GeoFire(refWorking);
 
-                    switch (tripId) {
-                        case "":
-                            geoFireWorking.removeLocation(userId);
-                            geoFireAvailable.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
-                            break;
+                        switch (tripId) {
+                            case "":
+                                geoFireWorking.removeLocation(userId);
+                                geoFireAvailable.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+                                break;
 
-                        default:
-                            geoFireAvailable.removeLocation(userId);
-                            geoFireWorking.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
-                            break;
+                            default:
+                                geoFireAvailable.removeLocation(userId);
+                                geoFireWorking.setLocation(userId, new GeoLocation(location.getLatitude(), location.getLongitude()));
+                                break;
+                        }
                     }
                 }
             }
@@ -319,7 +322,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private ConstraintLayout group1, group2, group3;
     private Boolean isStopTime = false;
     private long stopTime;
-    private FloatingActionButton btnCall, btnSms, btnCancel;
+    private FloatingActionButton btnCall, btnSms;
     private ImageView btnListRequest, btnDirection;
     private TextView txtCustomerName, txtTripCost, txtDrivingType, txtIsLoading;
     private Button btnDriverTrip;
@@ -361,7 +364,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         // group 3 status screen
         btnCall = (FloatingActionButton) getView().findViewById(R.id.btnCall);
         btnSms = (FloatingActionButton) getView().findViewById(R.id.btnSms);
-        btnCancel = (FloatingActionButton) getView().findViewById(R.id.btnCancel);
+        /*btnCancel = (FloatingActionButton) getView().findViewById(R.id.btnCancel);*/
         btnListRequest = (ImageView) getView().findViewById(R.id.btnListRequest);
         btnDirection = (ImageView) getView().findViewById(R.id.btnMapDirect);
         group3 = (ConstraintLayout) getView().findViewById(R.id.groupDriverMap3);
@@ -375,7 +378,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         btnDriverTrip.setOnClickListener(this);
         btnCall.setOnClickListener(this);
         btnSms.setOnClickListener(this);
-        btnCancel.setOnClickListener(this);
+        /*btnCancel.setOnClickListener(this);*/
         btnListRequest.setOnClickListener(this);
         btnDirection.setOnClickListener(this);
 
@@ -384,22 +387,23 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         btnStatus.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked) {
-                    if (!isStopTime) {
-                        imgStatus.setImageDrawable(getActivity().getDrawable(R.drawable.ic_on));
-                        txtStatus.setText("Đang hoạt động");
-                        connectDriver();
+                if (isAdded()) {
+                    if (isChecked) {
+                        if (!isStopTime) {
+                            imgStatus.setImageDrawable(getActivity().getDrawable(R.drawable.ic_on));
+                            txtStatus.setText("Đang hoạt động");
+                            connectDriver();
+                        } else {
+                            btnStatus.setChecked(false);
+                            Toast.makeText(getActivity(), "Bạn đang trong thời gian tạm khóa. Kích hoạt lại sau " + stopTime + " giây nữa.", Toast.LENGTH_LONG).show();
+                        }
                     } else {
-                        btnStatus.setChecked(false);
-                        Toast.makeText(getActivity(), "Bạn đang trong thời gian tạm khóa. Kích hoạt lại sau " + stopTime + " giây nữa.", Toast.LENGTH_LONG).show();
+                        disAssignedCustomer();
+                        imgStatus.setImageDrawable(getActivity().getDrawable(R.drawable.ic_off));
+                        txtStatus.setText("Tạm ngưng");
+                        disconnectDriver();
                     }
-                } else {
-                    disAssignedCustomer();
-                    imgStatus.setImageDrawable(getActivity().getDrawable(R.drawable.ic_off));
-                    txtStatus.setText("Tạm ngưng");
-                    disconnectDriver();
                 }
-
             }
         });
         btnBottom.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -470,7 +474,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                     showAcceptScreen();
                 } else {
                     Log.d(TAG, "onDataChange: data not exit");
-                    if (tripId != null && !tripId.isEmpty() && !driverReject && !isDone) {
+                    if (isAdded() && tripId != null && !tripId.isEmpty() && !driverReject && !isDone) {
                         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                         builder.setTitle("Thông báo!");
                         builder.setMessage("Khách hàng đã hủy đơn hàng này. ");
@@ -521,8 +525,9 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                 if (dataSnapshot.exists()) {
                     currentTrip = dataSnapshot.getValue(Trip.class);
                     String status = currentTrip.getDrivingMode();
-                    if (currentTrip.getExpressMode()) status += " Express";
-                    else status += " Economy";
+                    if (currentTrip.getExpressMode()) status += " Giao hàng nhanh";
+                    else status += " Giao hàng tiết kiệm";
+                    txtDrivingType.setText(status);
                     txtMoney.setText(currentTrip.getMoneySum() + " VNĐ");
                     if (currentTrip.getUsingLoading()) txtIsLoading.setVisibility(View.VISIBLE);
                     else txtIsLoading.setVisibility(View.GONE);
@@ -603,20 +608,22 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             }
 
             public void onFinish() {
-                declineRequest();
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setTitle("Chú ý!");
-                builder.setMessage("Quá thời gian chờ cho phép. Bạn sẽ chuyển về trạng thái tạm nghỉ trong vòng 2 phút ");
-                builder.setCancelable(false);
+                if (isAdded()) {
+                    declineRequest();
+                    AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                    builder.setTitle("Chú ý!");
+                    builder.setMessage("Quá thời gian chờ cho phép. Bạn sẽ chuyển về trạng thái tạm nghỉ trong vòng 2 phút ");
+                    builder.setCancelable(false);
 
-                builder.setNegativeButton("Đã hiểu", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.dismiss();
-                    }
-                });
-                AlertDialog alertDialog = builder.create();
-                alertDialog.show();
+                    builder.setNegativeButton("Đã hiểu", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    });
+                    AlertDialog alertDialog = builder.create();
+                    alertDialog.show();
+                }
             }
 
         }.start();
@@ -692,7 +699,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists() && dataSnapshot.getChildrenCount() > 0) {
                     currentCustomer = dataSnapshot.getValue(ShareCustomer.class);
-                    txtCustomerName.setText(currentCustomer.getLast_name() + " " + currentCustomer.getFirst_name());
+                    txtCustomerName.setText(currentCustomer.getFirst_name());
                     txtTripCost.setText(currentTrip.getMoneySum() + " VND");
                 }
             }
@@ -707,25 +714,26 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     private void endRide() {
         updateUI(0);
         erasePolylines();
+        if (FirebaseAuth.getInstance().getCurrentUser().getUid() != null) {
+            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+            DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userId).child("customerRequest");
+            driverRef.removeValue();
 
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        DatabaseReference driverRef = FirebaseDatabase.getInstance().getReference().child("Users").child("Drivers").child(userId).child("customerRequest");
-        driverRef.removeValue();
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
+            GeoFire geoFire = new GeoFire(ref);
+            geoFire.removeLocation(tripId);
+            tripId = "";
+            rideDistance = 0;
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("customerRequest");
-        GeoFire geoFire = new GeoFire(ref);
-        geoFire.removeLocation(tripId);
-        tripId = "";
-        rideDistance = 0;
-
-        if (pickupMarker != null) {
-            pickupMarker.remove();
-        }
-        for (int i = 0; i < markerList.size(); i++) {
-            markerList.get(i).remove();
-        }
-        if (assignedCustomerPickupLocationRefListener != null) {
-            assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);
+            if (pickupMarker != null) {
+                pickupMarker.remove();
+            }
+            for (int i = 0; i < markerList.size(); i++) {
+                markerList.get(i).remove();
+            }
+            if (assignedCustomerPickupLocationRefListener != null) {
+                assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);
+            }
         }
     }
 
@@ -759,6 +767,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
         if (assignedCustomerPickupLocationRefListener != null) {
             assignedCustomerPickupLocationRef.removeEventListener(assignedCustomerPickupLocationRefListener);
         }
+        ((MainActivity) getActivity()).resetMap();
     }
 
     private void recordRide() {
@@ -869,6 +878,38 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
                     getAssignedCustomerDestination();
                     getAssignedCustomerInfo();
                     updateUI(2);
+                    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                    final DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                            .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(user.getUid()).child("trip_accept");
+                    reference.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            long i = (long) dataSnapshot.getValue();
+                            i++;
+                            reference.setValue(i);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
+                    final DatabaseReference reference2 = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                            .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(user.getUid()).child("trip_count");
+                    reference2.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            long i = (long) dataSnapshot.getValue();                            i++;
+                            reference.setValue(i);
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+
+                        }
+                    });
+
                 }
                 break;
             case R.id.btnDecline:
@@ -973,6 +1014,7 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
     }
 
     private void declineRequest() {
+
         if (countDownTimer != null) countDownTimer.cancel();
         isAccept = false;
         driverReject = true;
@@ -1004,7 +1046,22 @@ public class DriverMap extends Fragment implements OnMapReadyCallback, View.OnCl
             }
 
         }.start();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                .child(InstanceVariants.CHILD_ACCOUNT_DRIVERS).child(user.getUid()).child("trip_cancel");
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                long i = (long) dataSnapshot.getValue();
+                i++;
+                reference.setValue(i);
+            }
 
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     @Override

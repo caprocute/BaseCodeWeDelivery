@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationManager;
@@ -16,6 +17,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -33,6 +35,8 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -88,6 +92,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.Projection;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
@@ -99,6 +104,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -801,6 +807,22 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             DatabaseReference refRequest = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_REQUEST);
             refRequest.child(item.getId()).setValue(item);
         }
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                .child(InstanceVariants.CHILD_WORKING_CUSTOMER).child(user.getUid()).child("trip_cancel");
+        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                long i = (long) dataSnapshot.getValue();
+                i++;
+                reference.setValue(i);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private void endRide() {
@@ -1036,11 +1058,27 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                     String check = (String) dataSnapshot.getValue();
                     Log.d("hieuhk", "onDataChange: driverWattingRef " + check);
                     if (check.equals("accept")) {
+                        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                         driverFound = true;
                         driverFoundID = driverWattingFoundID;
                         getDriverLocation();
                         getDriverInfo();
                         txtStatus.setText("Xác định vị trí tài xế...");
+                        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference().child(InstanceVariants.CHILD_SHARE_USER)
+                                .child(InstanceVariants.CHILD_WORKING_CUSTOMER).child(user.getUid()).child("trip_count");
+                        reference.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                long i = (long) dataSnapshot.getValue();
+                                i++;
+                                reference.setValue(i);
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+
+                            }
+                        });
                         countDownTimer.cancel();
                     } else if (check.equals("reject")) {
                         DatabaseReference driverRejectRef = FirebaseDatabase.getInstance().getReference()
@@ -1092,8 +1130,11 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                         locationLng = Double.parseDouble(map.get(1).toString());
                     }
                     LatLng driverLatLng = new LatLng(locationLat, locationLng);
-                    if (mDriverMarker != null) {
+                  /*  if (mDriverMarker != null) {
                         mDriverMarker.remove();
+                    }*/
+                    if (mDriverMarker != null) {
+                        rotateMarker(mDriverMarker, (float) bearingBetweenLocations(mDriverMarker.getPosition(), driverLatLng));
                     }
                     Location loc1 = new Location("");
                     loc1.setLatitude(pickupLocation.latitude);
@@ -1105,7 +1146,7 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
 
                     float distance = loc1.distanceTo(loc2);
 
-                    if (distance < 100) {
+                    if (distance < 500) {
                         txtStatus.setText("Tài xế đã đến!");
                     } else {
                         txtStatus.setText("Tài xế đang trên đường đến nhận hàng. Còn khoảng " + String.valueOf(Math.round(distance * 100) / 100000) + " km");
@@ -1123,9 +1164,11 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
                     }
                     Bitmap b = bitmapdraw.getBitmap();
                     Bitmap smallMarker = Bitmap.createScaledBitmap(b, width, height, false);
-                    mDriverMarker = mMap.addMarker(new MarkerOptions().
-                            position(driverLatLng).title("Tài xế của bạn").
-                            icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
+                    if (mDriverMarker == null)
+                        mDriverMarker = mMap.addMarker(new MarkerOptions().
+                                position(driverLatLng).title("Tài xế của bạn").
+                                icon(BitmapDescriptorFactory.fromBitmap(smallMarker)));
+                    animateMarker(driverLatLng, false);
                 }
 
             }
@@ -1135,6 +1178,97 @@ public class UserMap extends Fragment implements OnMapReadyCallback, View.OnClic
             }
         });
 
+    }
+
+    private Boolean isMarkerRotating = false;
+
+    private void rotateMarker(final Marker marker, final float toRotation) {
+        if (!isMarkerRotating) {
+            final Handler handler = new Handler();
+            final long start = SystemClock.uptimeMillis();
+            final float startRotation = marker.getRotation();
+            final long duration = 1000;
+
+            final Interpolator interpolator = new LinearInterpolator();
+
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    isMarkerRotating = true;
+
+                    long elapsed = SystemClock.uptimeMillis() - start;
+                    float t = interpolator.getInterpolation((float) elapsed / duration);
+
+                    float rot = t * toRotation + (1 - t) * startRotation;
+
+                    marker.setRotation(-rot > 180 ? rot / 2 : rot);
+                    if (t < 1.0) {
+                        // Post again 16ms later.
+                        handler.postDelayed(this, 16);
+                    } else {
+                        isMarkerRotating = false;
+                    }
+                }
+            });
+        }
+    }
+
+    private double bearingBetweenLocations(LatLng latLng1, LatLng latLng2) {
+
+        double PI = 3.14159;
+        double lat1 = latLng1.latitude * PI / 180;
+        double long1 = latLng1.longitude * PI / 180;
+        double lat2 = latLng2.latitude * PI / 180;
+        double long2 = latLng2.longitude * PI / 180;
+
+        double dLon = (long2 - long1);
+
+        double y = Math.sin(dLon) * Math.cos(lat2);
+        double x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1)
+                * Math.cos(lat2) * Math.cos(dLon);
+
+        double brng = Math.atan2(y, x);
+
+        brng = Math.toDegrees(brng);
+        brng = (brng + 360) % 360;
+
+        return brng;
+    }
+
+    public void animateMarker(final LatLng toPosition, final boolean hideMarke) {
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        Projection proj = mMap.getProjection();
+        Point startPoint = proj.toScreenLocation(mDriverMarker.getPosition());
+        final LatLng startLatLng = proj.fromScreenLocation(startPoint);
+        final long duration = 5000;
+
+        final Interpolator interpolator = new LinearInterpolator();
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = interpolator.getInterpolation((float) elapsed
+                        / duration);
+                double lng = t * toPosition.longitude + (1 - t)
+                        * startLatLng.longitude;
+                double lat = t * toPosition.latitude + (1 - t)
+                        * startLatLng.latitude;
+                mDriverMarker.setPosition(new LatLng(lat, lng));
+
+                if (t < 1.0) {
+                    // Post again 16ms later.
+                    handler.postDelayed(this, 16);
+                } else {
+                    if (hideMarke) {
+                        mDriverMarker.setVisible(false);
+                    } else {
+                        mDriverMarker.setVisible(true);
+                    }
+                }
+            }
+        });
     }
 
     private Driver currentDriver;
